@@ -412,10 +412,10 @@ async def createSchema(authorDid):
         if attrs[i] == '':
             attrs.remove(attrs[i])
             i -= 1
-        if attrs[i] == "done":
+        elif attrs[i] == "done":
             attrs.remove("done")
             add = False
-        if attrs[i] == "...":
+        elif attrs[i] == "...":
             attrs.clear()
             i -= i + 1
         i += 1
