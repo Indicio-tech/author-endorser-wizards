@@ -273,16 +273,36 @@ async def writeAuthorToLedger(poolHandle, authorTxnJson, endorserDid, tAA):
     authorDid = authorTxn["author_did"]
     authorVerKey = authorTxn["author_ver_key"]
     tAA = tAA["result"]
+    reqJson = ''
+    respJson = ''
 
     utctimestamp = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-
-    reqJson = await ledger.build_get_nym_request(endorserDid, authorDid)
-    respJson = await ledger.submit_request(poolHandle, reqJson)
+    
+    try:
+        reqJson = await ledger.build_get_nym_request(endorserDid, authorDid)
+    except:
+        print("Error building get nym request")
+    try:
+        respJson = await ledger.submit_request(poolHandle, reqJson)
+    except:
+        print("Error retrieving nym from ledger")
     resp = json.loads(respJson)
     if resp["result"]["seqNo"] == None:
-        reqJson = await ledger.build_nym_request(endorserDid, authorDid, authorVerKey, "newAuthor", None)
-        reqJson = await ledger.append_txn_author_agreement_acceptance_to_request(reqJson, tAA["data"]["text"], tAA["data"]["version"], None, "for_session", utctimestamp)
-        result = await ledger.sign_and_submit_request(poolHandle, walletHandle, endorserDid, reqJson)
+        result = ''
+        try:
+            reqJson = await ledger.build_nym_request(endorserDid, authorDid, authorVerKey, "newAuthor", None)
+        except:
+            print("Error initiating nym request")
+        try:
+            reqJson = await ledger.append_txn_author_agreement_acceptance_to_request(reqJson, tAA["data"]["text"], tAA["data"]["version"], None, "for_session", utctimestamp)
+        except:
+            print("Error appending TAA")
+        try:
+            result = await ledger.sign_and_submit_request(poolHandle, walletHandle, endorserDid, reqJson)
+        except CommonInvalidStructure:
+            print("Error sending Author DID to ledger because structure was invalid, was it copied correctly?")
+        except:
+            print("Error sending Author Did to ledger")
         print("Result:", result)
         if result["op"] == "REJECT":
             print("Check the above result to identify why writing the authors did to the ledger was rejected")
