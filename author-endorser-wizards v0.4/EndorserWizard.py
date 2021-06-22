@@ -85,6 +85,7 @@ async def signTxn(poolHandle, endorserDid, tAA):
     endorsedTxn = await ledger.multi_sign_request(walletHandle, endorserDid, authorTxnReq)
     return endorsedTxn
 
+
 async def openPool(network):  
     poolList = await pool.list_pools()
     if network == "Network name not found":
@@ -95,11 +96,22 @@ async def openPool(network):
     network = str(network).replace('[\'', '')
     network = network.replace('\']', '')
  
-    pool_handle = await pool.open_pool_ledger(config_name=network, config=None)
+    try:
+        pool_handle = await pool.open_pool_ledger(config_name=network, config=None)
+    except:
+        print("\n")
+        print("Error opening pool '" + network +"'")
+        print("\n")
     return pool_handle
  
 async def listPools():
-    poolList = await pool.list_pools()
+    poolList = ''
+    try:
+        poolList = await pool.list_pools()
+    except:
+        print("\n")
+        print("Error creating list of pools")
+        print("\n")
 
     print("Endorser's Pools:")
     for i in range(len(poolList)):
@@ -157,20 +169,35 @@ async def createWallet():
    #create wallet code
    #print("Creating new wallet '"+walletName+"'...")
  
-    await wallet.create_wallet(walletIDJson, walletKeyJson)
+    try:
+        await wallet.create_wallet(walletIDJson, walletKeyJson)
+    except:
+        print("\n")
+        print("Error creating wallet '" + walletName + "'")
+        print("\n")
  
-   #print("...done")
+    else:
+        print("...done")
  
     return walletName
  
 def listWallets():
     userDir = os.path.expanduser("~")
-    walletList = os.listdir(userDir + "/.indy_client/wallet/")
- 
-    print("Your Wallets:")
- 
-    for i in range(len(walletList)):
-        print(' ' + str(i+1) + ":", walletList[i])
+    dirExists = True
+    try:
+        walletList = os.listdir(userDir + "/.indy_client/wallet/")
+    except FileNotFoundError:
+        dirExists = False
+        print("You have no wallets yet")
+        print("\n")
+    except:
+        print("\n")
+        print("Error getting the list of wallets")
+        print("\n")
+    else:
+        print("Your Wallets:")
+        for i in range(len(walletList)):
+            print(' ' + str(i+1) + ":", walletList[i])
    #list wallet code
     return walletList
  
@@ -178,21 +205,33 @@ async def openWallet():
     walletList = listWallets()
     print(' ' + str(len(walletList) + 1) + ": Create New Wallet")
  
-    walletIndex = input("Choose the index number of the wallet you want to open: ")
-
-    walletName = "none"
-    exists = False
-    if walletIndex == len(walletList) + 1:
-        for i in range(len(walletList)):
-            if walletList[i] == "endorser_wizard_wallet":
-                exists = True
-        
-        if not exists:
-            walletName = await createWallet()
+    walletIndex = int(input("Choose the index number of the wallet you want to open: "))
+    userDir = os.path.expanduser("~")
+    dirExists = True
+    try:
+        walletList = os.listdir(userDir + "/.indy_client/wallet/")
+    except FileNotFoundError:
+        dirExists = False
+    except:
+        print("\n")
+        print("Error getting the list of wallets")
+        print("\n")
+    
+    if walletIndex == len(walletList)+1:
+        if dirExists:
+            walletExists = False
+            for i in range(len(walletList)):
+                if walletList[i] == "wizard_wallet":
+                    walletExists = True
+                    
+            if walletExists:
+                walletName = "wizard_wallet"
+            else:
+                walletName = await createWallet()
         else:
-            walletName = "endorser_wizard_wallet"
+            walletName = await createWallet()
     else:
-        walletName = walletList[walletIndex]
+        walletName = walletList[walletIndex-1]
     #userDir = os.path.expanduser("~")
     #walletList = os.listdir(userDir + "/.indy_client/wallet/")
     
@@ -211,8 +250,16 @@ async def openWallet():
     walletKeyConfig = json.dumps(walletKeyConfig)
     print("opening wallet '" + walletName + "'...")
     
-    global walletHandle
-    walletHandle = await wallet.open_wallet(walletNameConfig, walletKeyConfig)
+    try:
+        global walletHandle
+        walletHandle = await wallet.open_wallet(walletNameConfig, walletKeyConfig)
+    except:
+        print("\n")
+        print("Error opening wallet '" + walletName + "'")
+        print("\n")
+    else:
+        print("...done")
+
     return
     #print("...done")
 
@@ -245,8 +292,21 @@ async def writeAuthorToLedger(poolHandle, authorTxnJson, endorserDid, tAA):
         print("DID is on ledger.\n")
     return
 
-async def main():
-    print("Hello, welcome to the endorser wizard!")
+def displayMenu():
+    print("Menu:")
+    print("  0: Endorser Wizard")
+    print("  1: Sign Authors transaction and send to ledger")
+    print("  2: Open Pool")
+    print("  3: Create Wallet")
+    print("  4: Open Wallet")
+    print("  5: Use DID")
+    print("  6: Write Author's DID to ledger")
+    print("  7: Agree to the TAA")
+    print("  8: Display Menu")
+    print("  q: Quit")
+
+async def endorserWizard():
+    print("Hello, welcome to the Endorser Signing Wizard!")
     await openWallet()
     await listPools()
     network = input("Choose the pool you want to open: ")
@@ -259,8 +319,74 @@ async def main():
     endorsedTxn = await signTxn(poolHandle, endorserDid, tAA)
     print('\n')
     print("Signed txn:", endorsedTxn, "\nPass the above Transaction back to the author to send to the ledger.")
+    return network, poolHandle, endorserDid, tAA
 
-    
+async def main():
+    endorsedTxn = ''
+    signWizard = input("If you would like to skip the signing wizard enter 'y', otherwise hit enter: ")
+    if signWizard == 'y':
+        network = ''
+        poolHandle = 0
+        endorserDid = ''
+        tAA = ''
+    else:
+        network, poolHandle, endorserDid, tAA = await endorserWizard()
+   # Display menu for the different options for
+   # author endorser communication
+ 
+    displayMenu()
+    endorser = 1
+ 
+   # loop to allow user to choose many different options from the menu
+ 
+    while endorser:
+        endorserAction = input("Endorser Actions: ")
+        if endorserAction == 'q':
+            endorser = 0
+        elif endorserAction == '0':
+            poolHandle, addTAA = await setupWizard()
+        elif endorserAction == '1':
+            endorsedTxn = await signTxn(poolHandle, endorserDid, tAA)
+            print('\n')
+            print("Signed txn:", endorsedTxn, "\nPass the above Transaction back to the author to send to the ledger.")
+        elif endorserAction == '2':
+            poolList = await listPools()
+            endorserPool = input("Choose the index number of the pool you wish to open: ")
+            if endorserPool == len(poolList) + 1:
+                network = listNetworks()
+      
+                network = await createPool(network)
+                await openPool(network)
+            else:
+                network = await openPool(endorserPool)
+            print("Pool \'" + network + "\' opened.")
+        elif endorserAction == '3':
+            await createWallet()
+            print("wallet has been created")
+        elif endorserAction == '4':
+            await openWallet()
+            print("wallet has been opened")
+        elif endorserAction == '5':
+            endorserDid = await listDids()
+            #useDid(authorDid)
+        elif endorserAction == '6':
+            authorDid = input("authors did: ")
+            authorVerKey = input("Author's verkey: ")
+            authorInfo = {
+                "author_did": authorDid,
+                "author_ver_key": authorVerKey
+            }
+            authorInfoJson = json.dumps(authorInfo)
+            
+            await writeAuthorToLedger(poolHandle, authorInfoJson, endorserDid, tAA)
+        elif endorserAction == '7':
+            tAA = transactionAuthorAgreement(poolHandle, endorserDid)
+        else:
+            displayMenu()
+    if poolHandle:
+        await pool.close_pool_ledger(poolHandle)
+    if walletHandle:
+        await wallet.close_wallet(walletHandle)
 
     return
 

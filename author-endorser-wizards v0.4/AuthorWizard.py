@@ -14,8 +14,12 @@ from indy.error import ErrorCode, IndyError
 walletHandle = 0
 
 def downloadGenesis(networkUrl):
-    urllib.request.urlretrieve(networkUrl, "genesisFile")
-
+    try:
+        urllib.request.urlretrieve(networkUrl, "genesisFile")
+    except:
+        print("\n")
+        print("Error downloading genesis file")
+        print("\n")
 
 async def createPool(network):
 
@@ -64,7 +68,12 @@ async def openPool(network):
     return pool_handle
  
 async def listPools():
-    poolList = await pool.list_pools()
+    try:
+        poolList = await pool.list_pools()
+    except:
+        print("\n")
+        print("Error creating list of pools")
+        print("\n")
 
     print("Author's Pools:")
     for i in range(len(poolList)):
@@ -185,9 +194,9 @@ async def openWallet():
 
     return
     
-async def setupWizard():
+async def authorWizard():
     poolHandle = None
-    print("Welcome to the Author Transaction Setup Wizard!")
+    print("Welcome to the Author Transaction Creation Wizard!")
     print("Below is a list of pools:")
     poolList = await listPools()
     userPool = input("Choose the index number of the pool you want to open: ")
@@ -499,9 +508,9 @@ async def main():
     poolHandle = 0
     poolList = await pool.list_pools()
     addTAA = json.dumps({"key": "value"})
-    setup = input("Hello! If you would like to skip the setup wizard, type 'y' otherwise hit enter: ")
+    setup = input("Hello! If you would like to skip the transaction creation wizard, type 'y' otherwise hit enter: ")
     if setup != 'y':
-        poolHandle, addTAA = await setupWizard()
+        poolHandle, addTAA = await authorWizard()
   
  
    # Display menu for the different options for
@@ -517,7 +526,7 @@ async def main():
         if authorAction == 'q':
             author = 0
         elif authorAction == '0':
-            poolHandle, addTAA = await setupWizard()
+            poolHandle, addTAA = await authorWizard()
         elif authorAction == '1':
             authorDid = await listDids()
             await createSchema(authorDid)
