@@ -304,12 +304,17 @@ async def createDid():
     print()
     if metadataChoice == 'y':
         didMetadata = input("Input metadata here: ")
+        print("\n")
         try:
-            await did.set_did_metadata(walletHandle, authorDid, didMetadata)
-        except:
+            await did.set_did_metadata(walletHandle, authorDid[0], didMetadata)
+        except IndyError:
             print("\n")
             print("Error setting metadata")
             print("\n")
+            raise
+        except:
+            print("system error")
+            raise
 
     return authorDid
 
@@ -387,8 +392,8 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
     error = False
     try:
         await ledger.submit_request(poolHandle, authorsSignedTxn)
-    except ErrorCode.CommonInvalidStructure:
-        print("ERROR: Could not write txn to ledger")
+    except IndyError as CommonInvalidStructure:
+        print("ERROR: Could not write txn to ledger", CommonInvalidStructure)
         print()
         error = True
     except ErrorCode.LedgerInvalidTransaction:
@@ -443,31 +448,58 @@ async def createSchema(authorDid):
     else:
         return "error"
 
-async def createCredDef(authorDid, poolHandle, schemaTxn):
+async def createCredDef(authorDid, poolHandle):
     schemaID = input("Input the schema ID to use for this cred def: ")
-    getSchemaRequest = await ledger.build_get_schema_request(authorDid, schemaID)
+    getSchemaRequest = ''
+    try:
+        getSchemaRequest = await ledger.build_get_schema_request(authorDid, schemaID)
+    except IndyError as err:
+        print(err)
+        print("Error getting schema")
+
     print()
     if not poolHandle:
         await listPools()
         pool = input("Input the index of the pool to use: ")
         poolHandle = await openPool(pool)
-    schemaJsonResp = await ledger.submit_request(poolHandle, getSchemaRequest)
-    schemaResp = json.loads(schemaJsonResp)
-    schemaResp = schemaResp["result"]
-    schemaJson = {
-        "id": schemaID,
-        "name": schemaResp["data"]["name"], 
-        "version": schemaResp["data"]["version"], 
-        "attrNames": schemaResp["data"]["attr_names"],
-        "seqNo": schemaResp["seqNo"],
-        "ver": '1.0'
-    }
-
+    schemaJsonResp = 'none'
+    try:
+        schemaJsonResp = await ledger.submit_request(poolHandle, getSchemaRequest)
+    except IndyError:
+        print("indy is reporting an error")
+    except:
+        print("the system is reporting an error")
     
+    schemaResp = json.loads(schemaJsonResp)
+    schemaJson = {}
+    try:
+        schemaResp = schemaResp["result"]
+        schemaJson = {
+            "id": schemaID,
+            "name": schemaResp["data"]["name"], 
+            "version": schemaResp["data"]["version"], 
+            "attrNames": schemaResp["data"]["attr_names"],
+            "seqNo": schemaResp["seqNo"],
+            "ver": '1.0'
+        }
+    except KeyError:
+        print("Something went wrong when getting the schema")
+    
+    
+    credDefId = ''
+    credDefJson = ''
+    credDefTxn = ''
 
-    credDefId, credDefJson = await anoncreds.issuer_create_and_store_credential_def(walletHandle, authorDid, json.dumps(schemaJson), tag='1', signature_type = 'CL', config_json = json.dumps({"support_revocation": True}))
-
-    credDefTxn = await ledger.build_cred_def_request(authorDid, credDefJson)
+    try:
+        credDefId, credDefJson = await anoncreds.issuer_create_and_store_credential_def(walletHandle, authorDid, json.dumps(schemaJson), tag='1', signature_type = 'CL', config_json = json.dumps({"support_revocation": True}))
+    except IndyError as err:
+        print(err)
+        print("Error while creating cred def")
+    try:
+        credDefTxn = await ledger.build_cred_def_request(authorDid, credDefJson)
+    except IndyError as err:
+        print(err)
+        print("\nError building cred def request")
     return credDefTxn
 
 
@@ -479,7 +511,7 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
     print("Please agree to the Transaction Author Agreement(TAA) before continuing.")
     print()
     print("The TAA can be read at https://github.com/Indicio-tech/indicio-network/blob/main/TAA/TAA.md if connecting to an Indicio network, which includes agreeing to not place any Personaly Identifiable Information(PII) or any illeagal material on the ledger.")
-    
+    add_taa_resp = ''
     while not answered:
         agreeTAA = input("Do you accept the TAA(Y/N)?")
         if agreeTAA == 'y' or agreeTAA == 'Y':
@@ -497,8 +529,9 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
             answered = True
         else:
             continue
-    
-    add_taa_resp_json = json.loads(add_taa_resp)
+    add_taa_resp_json = 'none'
+    if not add_taa_resp == '':
+        add_taa_resp_json = json.loads(add_taa_resp)
 
     return add_taa_resp_json
 

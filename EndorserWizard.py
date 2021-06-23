@@ -43,7 +43,16 @@ async def createDid():
    
     if metadataChoice == 'y':
         didMetadata = input("Input metadata here: ")
-        did.set_did_metadata(walletHandle, endorserDid, didMetadata)
+        try:
+            await did.set_did_metadata(walletHandle, endorserDid, didMetadata)
+        except IndyError:
+            print("\n")
+            print("Error setting metadata")
+            print("\n")
+            raise
+        except:
+            print("system error")
+            
     return endorserDid
 
 async def listDids():
@@ -299,7 +308,7 @@ async def writeAuthorToLedger(poolHandle, authorTxnJson, endorserDid, tAA):
             print("Error appending TAA")
         try:
             result = await ledger.sign_and_submit_request(poolHandle, walletHandle, endorserDid, reqJson)
-        except CommonInvalidStructure:
+        except IndyError:
             print("Error sending Author DID to ledger because structure was invalid, was it copied correctly?")
         except:
             print("Error sending Author Did to ledger")
@@ -364,7 +373,7 @@ async def main():
         if endorserAction == 'q':
             endorser = 0
         elif endorserAction == '0':
-            poolHandle, addTAA = await setupWizard()
+            poolHandle, addTAA = await endorserWizard()
         elif endorserAction == '1':
             endorsedTxn = await signTxn(poolHandle, endorserDid, tAA)
             print('\n')
@@ -372,13 +381,7 @@ async def main():
         elif endorserAction == '2':
             poolList = await listPools()
             endorserPool = input("Choose the index number of the pool you wish to open: ")
-            if endorserPool == len(poolList) + 1:
-                network = listNetworks()
-      
-                network = await createPool(network)
-                await openPool(network)
-            else:
-                network = await openPool(endorserPool)
+            network = await openPool(endorserPool)
             print("Pool \'" + network + "\' opened.")
         elif endorserAction == '3':
             await createWallet()
