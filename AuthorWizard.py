@@ -387,8 +387,8 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
     error = False
     try:
         await ledger.submit_request(poolHandle, authorsSignedTxn)
-    except ErrorCode.CommonInvalidStructure:
-        print("ERROR: Could not write txn to ledger")
+    except IndyError as CommonInvalidStructure:
+        print("ERROR: Could not write txn to ledger", CommonInvalidStructure)
         print()
         error = True
     except ErrorCode.LedgerInvalidTransaction:
@@ -443,9 +443,15 @@ async def createSchema(authorDid):
     else:
         return "error"
 
-async def createCredDef(authorDid, poolHandle, schemaTxn):
+async def createCredDef(authorDid, poolHandle):
     schemaID = input("Input the schema ID to use for this cred def: ")
-    getSchemaRequest = await ledger.build_get_schema_request(authorDid, schemaID)
+    getSchemaRequest = ''
+    try:
+        getSchemaRequest = await ledger.build_get_schema_request(authorDid, schemaID)
+    except IndyError as err:
+        print(err)
+        print("Error getting schema")
+
     print()
     if not poolHandle:
         await listPools()
@@ -453,21 +459,35 @@ async def createCredDef(authorDid, poolHandle, schemaTxn):
         poolHandle = await openPool(pool)
     schemaJsonResp = await ledger.submit_request(poolHandle, getSchemaRequest)
     schemaResp = json.loads(schemaJsonResp)
-    schemaResp = schemaResp["result"]
-    schemaJson = {
-        "id": schemaID,
-        "name": schemaResp["data"]["name"], 
-        "version": schemaResp["data"]["version"], 
-        "attrNames": schemaResp["data"]["attr_names"],
-        "seqNo": schemaResp["seqNo"],
-        "ver": '1.0'
-    }
-
+    schemaJson = {}
+    try:
+        schemaResp = schemaResp["result"]
+        schemaJson = {
+            "id": schemaID,
+            "name": schemaResp["data"]["name"], 
+            "version": schemaResp["data"]["version"], 
+            "attrNames": schemaResp["data"]["attr_names"],
+            "seqNo": schemaResp["seqNo"],
+            "ver": '1.0'
+        }
+    except KeyError:
+        print("Something went wrong when getting the schema")
     
+    
+    credDefId = ''
+    credDefJson = ''
+    credDefTxn = ''
 
-    credDefId, credDefJson = await anoncreds.issuer_create_and_store_credential_def(walletHandle, authorDid, json.dumps(schemaJson), tag='1', signature_type = 'CL', config_json = json.dumps({"support_revocation": True}))
-
-    credDefTxn = await ledger.build_cred_def_request(authorDid, credDefJson)
+    try:
+        credDefId, credDefJson = await anoncreds.issuer_create_and_store_credential_def(walletHandle, authorDid, json.dumps(schemaJson), tag='1', signature_type = 'CL', config_json = json.dumps({"support_revocation": True}))
+    except IndyError as err:
+        print(err)
+        print("Error while creating cred def")
+    try:
+        credDefTxn = await ledger.build_cred_def_request(authorDid, credDefJson)
+    except IndyError as err:
+        print(err)
+        print("\nError building cred def request")
     return credDefTxn
 
 
