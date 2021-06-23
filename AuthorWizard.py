@@ -304,12 +304,17 @@ async def createDid():
     print()
     if metadataChoice == 'y':
         didMetadata = input("Input metadata here: ")
+        print("\n")
         try:
-            await did.set_did_metadata(walletHandle, authorDid, didMetadata)
-        except:
+            await did.set_did_metadata(walletHandle, authorDid[0], didMetadata)
+        except IndyError:
             print("\n")
             print("Error setting metadata")
             print("\n")
+            raise
+        except:
+            print("system error")
+            raise
 
     return authorDid
 
@@ -457,7 +462,14 @@ async def createCredDef(authorDid, poolHandle):
         await listPools()
         pool = input("Input the index of the pool to use: ")
         poolHandle = await openPool(pool)
-    schemaJsonResp = await ledger.submit_request(poolHandle, getSchemaRequest)
+    schemaJsonResp = 'none'
+    try:
+        schemaJsonResp = await ledger.submit_request(poolHandle, getSchemaRequest)
+    except IndyError:
+        print("indy is reporting an error")
+    except:
+        print("the system is reporting an error")
+    
     schemaResp = json.loads(schemaJsonResp)
     schemaJson = {}
     try:
@@ -499,7 +511,7 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
     print("Please agree to the Transaction Author Agreement(TAA) before continuing.")
     print()
     print("The TAA can be read at https://github.com/Indicio-tech/indicio-network/blob/main/TAA/TAA.md if connecting to an Indicio network, which includes agreeing to not place any Personaly Identifiable Information(PII) or any illeagal material on the ledger.")
-    
+    add_taa_resp = ''
     while not answered:
         agreeTAA = input("Do you accept the TAA(Y/N)?")
         if agreeTAA == 'y' or agreeTAA == 'Y':
@@ -517,8 +529,9 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
             answered = True
         else:
             continue
-    
-    add_taa_resp_json = json.loads(add_taa_resp)
+    add_taa_resp_json = 'none'
+    if not add_taa_resp == '':
+        add_taa_resp_json = json.loads(add_taa_resp)
 
     return add_taa_resp_json
 
