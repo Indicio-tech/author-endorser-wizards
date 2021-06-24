@@ -385,7 +385,7 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
         "author_ver_key": authorVerKey
     }
     authorsTxnWithDid = json.dumps(authorsTxnWithDid)
-    print(authorsTxnWithDid)
+    print("Transaction: ", authorsTxnWithDid)
 
     authorsSignedTxn = input("The endorser needs to sign this transaction, copy it then send it to the endorser to sign.\n Input signed transaction here: ")
     
@@ -513,7 +513,7 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
     print("The TAA can be read at https://github.com/Indicio-tech/indicio-network/blob/main/TAA/TAA.md if connecting to an Indicio network, which includes agreeing to not place any Personaly Identifiable Information(PII) or any illeagal material on the ledger.")
     add_taa_resp = ''
     while not answered:
-        agreeTAA = input("Do you accept the TAA(Y/N)?")
+        agreeTAA = input("Do you accept the TAA? (Y/N): ")
         if agreeTAA == 'y' or agreeTAA == 'Y':
             add_taa_req = await ledger.build_get_txn_author_agreement_request(authorDid, None)
             

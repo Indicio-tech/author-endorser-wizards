@@ -313,6 +313,8 @@ async def writeAuthorToLedger(poolHandle, authorTxnJson, endorserDid, tAA):
         except:
             print("Error sending Author Did to ledger")
         print("Result:", result)
+
+        result = json.loads(result)
         if result["op"] == "REJECT":
             print("Check the above result to identify why writing the authors did to the ledger was rejected")
             exit()
@@ -343,7 +345,6 @@ async def endorserWizard():
     endorserDid = await createDid()
     tAA = await transactionAuthorAgreement(poolHandle, endorserDid)
     input("Press enter to continue when the Author has completed his side.")
-    becomeEndorser()
 
     endorsedTxn = await signTxn(poolHandle, endorserDid, tAA)
     print('\n')
