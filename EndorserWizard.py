@@ -1,8 +1,10 @@
+from AuthorWizard import signSendTxn
 import json
 import logging
 from posixpath import join
 import sys
 import asyncio
+import platform
 import os
 import urllib
 import configparser
@@ -82,8 +84,13 @@ async def listDids():
     return endorserDid
 
 async def signTxn(poolHandle, endorserDid, tAA):
-    authorTxnReqJson = input("The author will have sent you a Transaction as a json.\nPaste that Transaction here: ")
+    fileName = "authors-txn.txt"
+    signedFileName = "authors-signed-txn.txt"
+    input("The author will have sent you a Transaction in a file.\nCopy that file to this directory then press enter.")
     
+    authorTxnFile = open(fileName)
+    authorTxnReqJson = authorTxnFile.read()
+    authorTxnFile.close()
     await writeAuthorToLedger(poolHandle, authorTxnReqJson, endorserDid, tAA)
     
     authorTxnReq = json.loads(authorTxnReqJson)
@@ -92,7 +99,11 @@ async def signTxn(poolHandle, endorserDid, tAA):
     authorTxnReq = json.dumps(authorTxnReq)
 
     endorsedTxn = await ledger.multi_sign_request(walletHandle, endorserDid, authorTxnReq)
-    return endorsedTxn
+    
+    endorsedTxnFile = open(signedFileName, 'w')
+    endorsedTxnFile.write(endorsedTxn)
+    endorsedTxnFile.close()
+    return endorsedTxn, signedFileName
 
 
 async def openPool(network):  
@@ -346,9 +357,9 @@ async def endorserWizard():
     tAA = await transactionAuthorAgreement(poolHandle, endorserDid)
     input("Press enter to continue when the Author has completed his side.")
 
-    endorsedTxn = await signTxn(poolHandle, endorserDid, tAA)
+    endorsedTxn, endorsedTxnFile = await signTxn(poolHandle, endorserDid, tAA)
     print('\n')
-    print("Signed txn:", endorsedTxn, "\nPass the above Transaction back to the author to send to the ledger.")
+    print("Signed txn file:", endorsedTxnFile,"Pass the above Transaction back to the author to send to the ledger.")
     return network, poolHandle, endorserDid, tAA
 
 async def main():
