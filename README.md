@@ -1,6 +1,8 @@
 # Author-Endorser-Wizards
 Python program to walk through the author and endorser workflow to create schemas and cred defs
 
+## Setup Instructions
+
 ## Linux 18.04 (Lynn’s version):
 
 ### On a clean install of Ubuntu 18.04 the following works to install and run the Appropriate Wizard.  Please adjust if appropriate for your environment.
