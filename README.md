@@ -3,7 +3,7 @@ Python program to walk through the author and endorser workflow to create schema
 
 ## Setup Instructions
 
-### Linux 18.04:
+### Linux 18.04
 
 #### On a clean install of Ubuntu 18.04 the following works to install and run the Appropriate Wizard.  Please adjust if appropriate for your environment.
 - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88
@@ -26,10 +26,10 @@ Python program to walk through the author and endorser workflow to create schema
 - If you are the Endorser run:
 - python3 EndorserWizard.py
 
-### Windows 10:
+### Windows 10
 
 #### Windows Setup Instructions
 
-### MacOs :
+### MacOs
 
 #### Apple Setup Instructions
