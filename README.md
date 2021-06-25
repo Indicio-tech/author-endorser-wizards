@@ -29,6 +29,7 @@ Python program to walk through the author and endorser workflow to create schema
 ### Windows 10
 
 #### Windows Setup Instructions
+- download latest from https://repo.sovrin.org/windows/libindy/stable
 - set LIBINDY_DIR= path to indy.dll
 
 ### MacOs
