@@ -29,7 +29,7 @@ Python program to walk through the author and endorser workflow to create schema
 ### Windows 10
 
 #### Windows Setup Instructions
-- set LIBINDY_DIR=<path to indy.dll>
+- set LIBINDY_DIR= path to indy.dll
 
 ### MacOs
 
