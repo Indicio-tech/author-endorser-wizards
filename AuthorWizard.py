@@ -10,6 +10,7 @@ from aiohttp import web
 from ctypes import cdll
 from indy import ledger, did, wallet, pool, anoncreds
 from indy.error import ErrorCode, IndyError
+import platform
 
 walletHandle = 0
 
@@ -117,8 +118,11 @@ async def createWallet():
 def listWallets():
     userDir = os.path.expanduser("~")
     dirExists = True
+    filePath = "/.indy_client/wallet/"
+    if platform.system() == "Windows":
+        filePath = "\.indy_client\wallet\\"
     try:
-        walletList = os.listdir(userDir + "/.indy_client/wallet/")
+        walletList = os.listdir(userDir + filePath)
     except FileNotFoundError:
         dirExists = False
         print("You have no wallets yet")
@@ -357,6 +361,8 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
     tAA = tAA["result"]
 # note: check for endorser using get nym
     utctimestamp = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+    fileName = "authors-txn.txt"
+    signedFileName = "authors-signed-txn.txt"
 
     try:
         authorsTxn = await ledger.append_txn_author_agreement_acceptance_to_request(authorsTxn, tAA["data"]["text"], tAA["data"]["version"], None, 'for_session', utctimestamp)
@@ -385,10 +391,28 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
         "author_ver_key": authorVerKey
     }
     authorsTxnWithDid = json.dumps(authorsTxnWithDid)
-    print("Transaction: ", authorsTxnWithDid)
-
-    authorsSignedTxn = input("The endorser needs to sign this transaction, copy it then send it to the endorser to sign.\n Input signed transaction here: ")
     
+
+    if os.path.exists(fileName):
+        input("A file named '"+fileName+"""' already exists and will be over written.
+If you would like to keep the original file rename it now.
+Press Enter to continue""")
+
+    print("Transaction: ", fileName)
+
+    txnFile = open(fileName, "w")
+    txnFile.write(authorsTxnWithDid)
+    txnFile.close()
+
+    input("""The endorser needs to sign this transaction.  
+Send the file named '"""+fileName+"""' to the endorser.
+The Endorser will have sent a file named '"""+signedFileName+"""'.
+Copy that file to this directory then press enter.""")
+    
+    authorsSignedTxnFile = open(signedFileName)
+    authorsSignedTxn = authorsSignedTxnFile.read()
+    authorsSignedTxnFile.close()
+
     error = False
     try:
         await ledger.submit_request(poolHandle, authorsSignedTxn)
@@ -449,57 +473,65 @@ async def createSchema(authorDid):
         return "error"
 
 async def createCredDef(authorDid, poolHandle):
-    schemaID = input("Input the schema ID to use for this cred def: ")
-    getSchemaRequest = ''
-    try:
-        getSchemaRequest = await ledger.build_get_schema_request(authorDid, schemaID)
-    except IndyError as err:
-        print(err)
-        print("Error getting schema")
+    invalidSchema = True
+    credDefTxn = '{"none":"0"}'
+    while invalidSchema:
+        schemaID = input("Input the schema ID to use for this cred def: ")
+        getSchemaRequest = ''
+        try:
+            getSchemaRequest = await ledger.build_get_schema_request(authorDid, schemaID)
+        except IndyError as err:
+            print(err)
+            print("Error getting schema")
 
-    print()
-    if not poolHandle:
-        await listPools()
-        pool = input("Input the index of the pool to use: ")
-        poolHandle = await openPool(pool)
-    schemaJsonResp = 'none'
-    try:
-        schemaJsonResp = await ledger.submit_request(poolHandle, getSchemaRequest)
-    except IndyError:
-        print("indy is reporting an error")
-    except:
-        print("the system is reporting an error")
-    
-    schemaResp = json.loads(schemaJsonResp)
-    schemaJson = {}
-    try:
-        schemaResp = schemaResp["result"]
-        schemaJson = {
-            "id": schemaID,
-            "name": schemaResp["data"]["name"], 
-            "version": schemaResp["data"]["version"], 
-            "attrNames": schemaResp["data"]["attr_names"],
-            "seqNo": schemaResp["seqNo"],
-            "ver": '1.0'
-        }
-    except KeyError:
-        print("Something went wrong when getting the schema")
-    
-    
-    credDefId = ''
-    credDefJson = ''
-    credDefTxn = ''
+        print()
+        if poolHandle == 0:
+            await listPools()
+            pool = input("Input the index of the pool to use: ")
+            poolHandle = await openPool(pool)
+        schemaJsonResp = 'nothing'
+        try:
+            schemaJsonResp = await ledger.submit_request(poolHandle, getSchemaRequest)
+        except IndyError:
+            print("indy is reporting an error")
+            schemaJsonResp = '"error": "indyerror"'
+        except:
+            print("the system is reporting an error")
+        
+        schemaResp = json.loads(schemaJsonResp)
+        schemaJson = {}
+        try:
+            schemaResp = schemaResp["result"]
+            schemaJson = {
+                "id": schemaID,
+                "name": schemaResp["data"]["name"], 
+                "version": schemaResp["data"]["version"], 
+                "attrNames": schemaResp["data"]["attr_names"],
+                "seqNo": schemaResp["seqNo"],
+                "ver": '1.0'
+            }
+            invalidSchema = False
+        except KeyError:
+            print("Something went wrong when getting the schema")
+            print("Most likely the schema is not on the ledger, Please try again with a valid schema id")
+            invalidSchema = True
+            continue
+        
+        
+        credDefId = ''
+        credDefJson = ''
+        credDefTxn = ''
 
-    try:
-        credDefId, credDefJson = await anoncreds.issuer_create_and_store_credential_def(walletHandle, authorDid, json.dumps(schemaJson), tag='1', signature_type = 'CL', config_json = json.dumps({"support_revocation": True}))
-    except IndyError as err:
-        print(err)
-        print("Error while creating cred def")
-    try:
-        credDefTxn = await ledger.build_cred_def_request(authorDid, credDefJson)
-    except IndyError as err:
-        print(err)
-        print("\nError building cred def request")
+        try:
+            credDefId, credDefJson = await anoncreds.issuer_create_and_store_credential_def(walletHandle, authorDid, json.dumps(schemaJson), tag='1', signature_type = 'CL', config_json = json.dumps({"support_revocation": True}))
+        except IndyError as err:
+            print(err)
+            print("Error while creating cred def")
+        try:
+            credDefTxn = await ledger.build_cred_def_request(authorDid, credDefJson)
+        except IndyError as err:
+            print(err)
+            print("\nError building cred def request")
     return credDefTxn
 
 
@@ -515,8 +547,10 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
     while not answered:
         agreeTAA = input("Do you accept the TAA? (Y/N): ")
         if agreeTAA == 'y' or agreeTAA == 'Y':
-            add_taa_req = await ledger.build_get_txn_author_agreement_request(authorDid, None)
-            
+            try:
+                add_taa_req = await ledger.build_get_txn_author_agreement_request(authorDid, None)
+            except IndyError:
+                print("Error appending TAA to request, have you created one yet?")
             print()
             add_taa_resp = await ledger.sign_and_submit_request(poolHandle, walletHandle, authorDid, add_taa_req)
             answered = True
@@ -537,13 +571,16 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
 
 async def main():
     network = 0
+    authorDid = 'none'
+    authorVerKey = 'none'
+    authorsTxn = 'none'
     await openWallet()
     poolHandle = 0
     poolList = await pool.list_pools()
-    addTAA = json.dumps({"key": "value"})
+    tAA = json.dumps({"key": "value"})
     setup = input("Hello! If you would like to skip the transaction creation wizard, type 'y' otherwise hit enter: ")
     if setup != 'y':
-        poolHandle, addTAA = await authorWizard()
+        poolHandle, tAA = await authorWizard()
   
  
    # Display menu for the different options for
@@ -559,17 +596,17 @@ async def main():
         if authorAction == 'q':
             author = 0
         elif authorAction == '0':
-            poolHandle, addTAA = await authorWizard()
+            poolHandle, tAA = await authorWizard()
         elif authorAction == '1':
-            authorDid = await listDids()
+            authorDid, authorVerKey = await listDids()
             await createSchema(authorDid)
         elif authorAction == '2':
-            #sendSignSchema()
-            print("fixme: send schema option")
+            tAA = await transactionAuthorAgreement(poolHandle, authorDid)
+            await signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle)
         elif authorAction == '3':
             #listSchemas
             #createCredDef(schema)
-            await createCredDef(authorDid, poolHandle)
+            authorsTxn = await createCredDef(authorDid, poolHandle)
         elif authorAction == '4':
             #sendSignCredDef
             print("Fixme: send cred def")
@@ -584,10 +621,10 @@ async def main():
                 network = listNetworks()
       
                 network = await createPool(network)
-                await openPool(network)
+                poolHandle = await openPool(network)
             else:
-                network = await openPool(authorPool)
-            print("Pool \'" + network + "\' opened.")
+                poolHandle = await openPool(authorPool)
+            print("Pool opened.")
         elif authorAction == '7':
            
             await createWallet()
@@ -596,15 +633,11 @@ async def main():
             await openWallet()
             print("wallet has been opened")
         elif authorAction == '9':
-            seed = input("would you like to use a seed? (Y/n): ")
-            if seed == 'n':
-               #createDidFromSeed("none")
-                print("FIXME: create did with random seed")
-            else:
-                authorDidSeed = input("enter a seed to use for the did: ")
-                print("FIXME: create did")
+
+            await createDid()
+
         elif authorAction == '10':
-            authorDid = await listDids()
+            authorDid, authorVerKey = await listDids()
             #useDid(authorDid)
         else:
             displayMenu()
