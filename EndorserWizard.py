@@ -86,7 +86,8 @@ async def listDids():
 async def signTxn(poolHandle, endorserDid, tAA):
     fileName = "authors-txn.txt"
     signedFileName = "authors-signed-txn.txt"
-    input("The author will have sent you a Transaction in a file.\nCopy that file to this directory then press enter.")
+    input("""The author will have sent you a Transaction in a file.
+Copy that file to the 'author-endorser-wizards' directory then press enter.""")
     
     authorTxnFile = open(fileName)
     authorTxnReqJson = authorTxnFile.read()
@@ -187,7 +188,7 @@ async def createWallet():
     walletIDJson = json.dumps(walletID)
  
    #create wallet code
-   #print("Creating new wallet '"+walletName+"'...")
+    print("Creating new wallet '"+walletName+"'...")
  
     try:
         await wallet.create_wallet(walletIDJson, walletKeyJson)
@@ -241,11 +242,11 @@ async def openWallet():
         if dirExists:
             walletExists = False
             for i in range(len(walletList)):
-                if walletList[i] == "wizard_wallet":
+                if walletList[i] == "endorser_wizard_wallet":
                     walletExists = True
                     
             if walletExists:
-                walletName = "wizard_wallet"
+                walletName = "endorser_wizard_wallet"
             else:
                 walletName = await createWallet()
         else:
@@ -359,10 +360,11 @@ async def endorserWizard():
 
     endorsedTxn, endorsedTxnFile = await signTxn(poolHandle, endorserDid, tAA)
     print('\n')
-    print("Signed txn file:", endorsedTxnFile,"Pass the above Transaction back to the author to send to the ledger.")
+    print("Signed txn file:", endorsedTxnFile,"\nPass the above Transaction back to the author to send to the ledger.")
     return network, poolHandle, endorserDid, tAA
 
 async def main():
+    createWallet()
     endorsedTxn = ''
     signWizard = input("If you would like to skip the signing wizard enter 'y', otherwise hit enter: ")
     if signWizard == 'y':
@@ -387,9 +389,9 @@ async def main():
         elif endorserAction == '0':
             poolHandle, addTAA = await endorserWizard()
         elif endorserAction == '1':
-            endorsedTxn = await signTxn(poolHandle, endorserDid, tAA)
+            endorsedTxn, endorsedTxnFile = await signTxn(poolHandle, endorserDid, tAA)
             print('\n')
-            print("Signed txn:", endorsedTxn, "\nPass the above Transaction back to the author to send to the ledger.")
+            print("Signed txn file:", endorsedTxnFile, "\nPass the above Transaction back to the author to send to the ledger.")
         elif endorserAction == '2':
             poolList = await listPools()
             endorserPool = input("Choose the index number of the pool you wish to open: ")

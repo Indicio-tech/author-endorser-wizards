@@ -112,9 +112,9 @@ async def createWallet():
  
     else:
         print("...done")
- 
+
     return walletName
- 
+
 def listWallets():
     userDir = os.path.expanduser("~")
     dirExists = True
@@ -149,8 +149,11 @@ async def openWallet():
     walletName = "none"
     userDir = os.path.expanduser("~")
     dirExists = True
+    filePath = "/.indy_client/wallet/"
+    if platform.system() == "Windows":
+        filePath = "\.indy_client\wallet\\"
     try:
-        walletList = os.listdir(userDir + "/.indy_client/wallet/")
+        walletList = os.listdir(userDir + filePath)
     except FileNotFoundError:
         dirExists = False
     except:
@@ -392,22 +395,32 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
     }
     authorsTxnWithDid = json.dumps(authorsTxnWithDid)
     
-
+    slash = '/'
+    if platform.system() == "windows":
+        slash ='\\'
     if os.path.exists(fileName):
         input("A file named '"+fileName+"""' already exists and will be over written.
-If you would like to keep the original file rename it now.
+If you would like to keep the original file, rename it now.
 Press Enter to continue""")
 
-    print("Transaction: ", fileName)
+    print("Transaction file: author-endorser-wizards" + slash + fileName)
 
-    txnFile = open(fileName, "w")
+    try:
+        txnFile = open(fileName, "x")
+    except:
+        print("Replacing the previous version of " + fileName + "...")
+        txnFile = open(fileName, "w")
+    else: 
+        print("Writing", fileName + "...")
     txnFile.write(authorsTxnWithDid)
     txnFile.close()
-
+    print("...done")
+    print()
     input("""The endorser needs to sign this transaction.  
-Send the file named '"""+fileName+"""' to the endorser.
-The Endorser will have sent a file named '"""+signedFileName+"""'.
-Copy that file to this directory then press enter.""")
+Send the file named '"""+fileName+"' to the endorser.")
+
+    input("""The Endorser will have sent a file named '"""+signedFileName+"""'.
+Copy that file to the 'author-endorser-wizards' directory then press enter.""")
     
     authorsSignedTxnFile = open(signedFileName)
     authorsSignedTxn = authorsSignedTxnFile.read()
@@ -425,6 +438,7 @@ Copy that file to this directory then press enter.""")
         print()
         error = True
     if not error:
+        print("\n")
         print("Successfully written to the ledger.")
     return
 
