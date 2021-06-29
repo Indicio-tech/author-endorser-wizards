@@ -77,7 +77,7 @@ async def listDids():
     index = int(input("Choose your did's index: "))
     index = index - 1
     if index == len(didList):
-        endorserDid, endorserVerKey = await createDid()
+        endorserDid = await createDid()
     else:
         endorserDid = didList[index]["did"]
 
@@ -107,10 +107,64 @@ Copy that file to the 'author-endorser-wizards' directory then press enter.""")
     return endorsedTxn, signedFileName
 
 
+def downloadGenesis(networkUrl):
+    try:
+        urllib.request.urlretrieve(networkUrl, "genesisFile")
+    except:
+        print("\n")
+        print("Error downloading genesis file")
+        print("\n")
+
+def listNetworks():
+    print(" 1: indicioTestnet")
+    print(" 2: indicioDemonet")
+    print(" 3: indicioMainnet")
+ 
+    network = input("which network do you want to use? : ")
+ 
+    if network == '1':
+        network = "indicioTestnet"
+    elif network == '2':
+        network = "indicioDemonet"
+    elif network == '3':
+        network = "indicioMainnet"
+    return network
+
+async def createPool(network):
+
+    if "indicioTestnet" == network:
+        network_genesis_url="https://raw.githubusercontent.com/Indicio-tech/indicio-network/main/genesis_files/pool_transactions_testnet_genesis"
+    elif "indicioDemonet" == network:
+        network_genesis_url="https://raw.githubusercontent.com/Indicio-tech/indicio-network/main/genesis_files/pool_transactions_demonet_genesis"
+    elif "indicioMainnet" == network:
+        network_genesis_url="https://raw.githubusercontent.com/Indicio-tech/indicio-network/main/genesis_files/pool_transactions_mainnet_genesis"
+    else: network = "Network name not found"
+
+    downloadGenesis(network_genesis_url)
+
+
+    config = {
+            "genesis_txn": "genesisFile"
+    }
+    configJson = json.dumps(config)
+
+    try:
+        await pool.create_pool_ledger_config(network, configJson)
+    except:
+        print("\n")
+        print("Error creating pool")
+        print("\n")
+    
+    return network
+
 async def openPool(network):  
     poolList = await pool.list_pools()
+    pool_handle = 0
     if network == "Network name not found":
         return "Network name not found"
+    elif network == str(len(poolList) + 1):
+        network = listNetworks()
+        network = await createPool(network)
     for i in range(len(poolList)):
         if network == str(i+1):
             network = list(poolList[i].values())
@@ -339,13 +393,14 @@ def displayMenu():
     print("Menu:")
     print("  0: Endorser Wizard")
     print("  1: Sign Authors transaction and send to ledger")
-    print("  2: Open Pool")
-    print("  3: Create Wallet")
-    print("  4: Open Wallet")
-    print("  5: Use DID")
-    print("  6: Write Author's DID to ledger")
-    print("  7: Agree to the TAA")
-    print("  8: Display Menu")
+    print("  2: Create Pool")
+    print("  3: Open Pool")
+    print("  4: Create Wallet")
+    print("  5: Open Wallet")
+    print("  6: Use DID")
+    print("  7: Write Author's DID to ledger")
+    print("  8: Agree to the TAA")
+    print("  9: Display Menu")
     print("  q: Quit")
 
 async def endorserWizard():
@@ -364,7 +419,7 @@ async def endorserWizard():
     return network, poolHandle, endorserDid, tAA
 
 async def main():
-    createWallet()
+    await openWallet()
     endorsedTxn = ''
     signWizard = input("If you would like to skip the signing wizard enter 'y', otherwise hit enter: ")
     if signWizard == 'y':
@@ -387,37 +442,62 @@ async def main():
         if endorserAction == 'q':
             endorser = 0
         elif endorserAction == '0':
-            poolHandle, addTAA = await endorserWizard()
+            network, poolHandle, endorserDid, tAA = await endorserWizard()
         elif endorserAction == '1':
-            endorsedTxn, endorsedTxnFile = await signTxn(poolHandle, endorserDid, tAA)
-            print('\n')
-            print("Signed txn file:", endorsedTxnFile, "\nPass the above Transaction back to the author to send to the ledger.")
+            if poolHandle == 0:
+                print("There is no open pool. Please open a pool first (option 3)")
+            elif endorserDid == '':
+                print("You have not yet chosen the DID to use for this transaction. Please specify your endorser DID (option 6)")
+            elif tAA == '':
+                print("agreement to the TAA is required for this action. Please agree to the TAA (option 8)")
+            else:
+                endorsedTxn, endorsedTxnFile = await signTxn(poolHandle, endorserDid, tAA)
+                print('\n')
+                print("Signed txn file:", endorsedTxnFile, "\nPass the above Transaction back to the author to send to the ledger.")
         elif endorserAction == '2':
+            network = listNetworks()
+            await createPool(network)
+            print("Pool '", network, "' created.")
+        elif endorserAction == '3':
             poolList = await listPools()
             endorserPool = input("Choose the index number of the pool you wish to open: ")
-            network = await openPool(endorserPool)
-            print("Pool \'" + network + "\' opened.")
-        elif endorserAction == '3':
-            await createWallet()
-            print("wallet has been created")
+            poolHandle = await openPool(endorserPool)
+            poolName = str(poolList[int(endorserPool)-1].values()).replace('dict_values([', '')
+            poolName = poolName.replace("])", '')
+            print("Pool " + poolName + " opened.")
         elif endorserAction == '4':
-            await openWallet()
-            print("wallet has been opened")
+            await createWallet()
+            
         elif endorserAction == '5':
+            await openWallet()
+            
+        elif endorserAction == '6':
             endorserDid = await listDids()
             #useDid(authorDid)
-        elif endorserAction == '6':
-            authorDid = input("authors did: ")
-            authorVerKey = input("Author's verkey: ")
-            authorInfo = {
-                "author_did": authorDid,
-                "author_ver_key": authorVerKey
-            }
-            authorInfoJson = json.dumps(authorInfo)
-            
-            await writeAuthorToLedger(poolHandle, authorInfoJson, endorserDid, tAA)
         elif endorserAction == '7':
-            tAA = transactionAuthorAgreement(poolHandle, endorserDid)
+            if poolHandle == 0:
+                print("There is no open pool. Please open a pool first (option 3)")
+            elif endorserDid == '':
+                print("You have not yet chosen the DID to use for this transaction. Please specify your endorser DID (option 6)")
+            elif tAA == '':
+                print("agreement to the TAA is required for this action. Please agree to the TAA(option 8)")
+            else:
+                authorDid = input("Authors DID: ")
+                authorVerKey = input("Author's Verkey: ")
+                authorInfo = {
+                    "author_did": authorDid,
+                    "author_ver_key": authorVerKey
+                }
+                authorInfoJson = json.dumps(authorInfo)
+            
+                await writeAuthorToLedger(poolHandle, authorInfoJson, endorserDid, tAA)
+        elif endorserAction == '8':
+            if poolHandle == 0:
+                print("Please open a pool first (option 3)")
+            elif endorserDid == '':
+                print("Please specify your endorser DID (option 6)")
+            else:
+                tAA = await transactionAuthorAgreement(poolHandle, endorserDid)
         else:
             displayMenu()
     if poolHandle:

@@ -44,7 +44,7 @@ async def createPool(network):
         await pool.create_pool_ledger_config(network, configJson)
     except:
         print("\n")
-        print("Error creating pool")
+        print("Error Adding Network")
         print("\n")
     
     return network
@@ -64,7 +64,7 @@ async def openPool(network):
         pool_handle = await pool.open_pool_ledger(config_name=network, config=None)
     except:
         print("\n")
-        print("Error opening pool '" + network +"'")
+        print("Error connecting to network '" + network +"'")
         print("\n")
     return pool_handle
  
@@ -73,13 +73,13 @@ async def listPools():
         poolList = await pool.list_pools()
     except:
         print("\n")
-        print("Error creating list of pools")
+        print("Error creating list of networks")
         print("\n")
 
-    print("Author's Pools:")
+    print("Author's Networks:")
     for i in range(len(poolList)):
         print("   " + str(i + 1) + ":", *list(poolList[i].values()))
-    print("   " + str(len(poolList)+1) + ": Create New Pool")
+    print("   " + str(len(poolList)+1) + ": Add New Network")
     print()
 
     return poolList
@@ -204,9 +204,9 @@ async def openWallet():
 async def authorWizard():
     poolHandle = None
     print("Welcome to the Author Transaction Creation Wizard!")
-    print("Below is a list of pools:")
     poolList = await listPools()
-    userPool = input("Choose the index number of the pool you want to open: ")
+    userPool = input("Choose the index number of the network you want to use: ")
+    print("\n")
     if userPool == str(len(poolList) + 1):
        network = listNetworks()
        
@@ -225,12 +225,18 @@ async def authorWizard():
        #authorDidSeed = input("Enter your super secret seed for your new did: ")
        #authorDid = createDidFromSeed(authorDidSeed)
    #didUse(authorDid)
-    
+    print("\n")
     
     tAA = await transactionAuthorAgreement(poolHandle, authorDid)
+
+    print("\n")
     schemaID = ''
 
-    schemaChoice = input("Do you want to... \n 1. Create a new schema or \n 2. Use an existing one?\n (1/2):")
+    schemaChoice = input("""Do you want to... 
+ 1. Create a new schema or 
+ 2. Use an existing one?
+
+ (1/2):""")
     while True:
         if schemaChoice == '1':
             schemaTxn = await createSchema(authorDid)
@@ -241,7 +247,11 @@ async def authorWizard():
         else:
             print("Invalid input, please input 1 or 2")
             print()
-            schemaChoice = input("Do you want to... \n 1. Create a new schema or \n 2. Use an existing one?\n (1/2):")
+            schemaChoice = input("""Do you want to... 
+ 1. Create a new schema or 
+ 2. Use an existing one?
+
+ (1/2):""")
 
     credDefTxn = await createCredDef(authorDid, poolHandle)
 
@@ -254,24 +264,23 @@ def displayMenu():
     print("Menu:")
     print("  0: Author Wizard")
     print("  1: Create Schema")
-    print("  2: Sign Schema and send to ledger")
-    print("  3: Create Credential Definition")
-    print("  4: Sign Cred def and send to ledger")
-    print("  5: Create Pool")
-    print("  6: Open Pool")
-    print("  7: Create Wallet")
-    print("  8: Open Wallet")
-    print("  9: Create DID")
-    print(" 10: Use DID")
-    print(" 11: Display Menu")
+    print("  2: Create Credential Definition")
+    print("  3: Sign Transaction and Send to Ledger")
+    print("  4: Add Network")
+    print("  5: Connect to a Network")
+    print("  6: Create Wallet")
+    print("  7: Open Wallet")
+    print("  8: Create DID")
+    print("  9: Use DID")
+    print(" 10: Display Menu")
     print("  q: Quit")
- 
+
 def listNetworks():
     print(" 1: indicioTestnet")
     print(" 2: indicioDemonet")
     print(" 3: indicioMainnet")
  
-    network = input("which network do you want to use? : ")
+    network = input("Which network do you want to use? : ")
  
     if network == '1':
         network = "indicioTestnet"
@@ -421,8 +430,17 @@ Send the file named '"""+fileName+"' to the endorser.")
 
     input("""The Endorser will have sent a file named '"""+signedFileName+"""'.
 Copy that file to the 'author-endorser-wizards' directory then press enter.""")
-    
-    authorsSignedTxnFile = open(signedFileName)
+    error = True
+    while error:
+        try:
+            authorsSignedTxnFile = open(signedFileName)
+            error == False
+        except FileNotFoundError:
+            print("The file does not exsist, Please ensure that the endorser sent you the correct file and it is in the correct directory.")
+            print("""File path: author-endorser-wizards/
+File name:""", signedFileName)
+            input("Press enter when completed")
+            error = True
     authorsSignedTxn = authorsSignedTxnFile.read()
     authorsSignedTxnFile.close()
 
@@ -501,7 +519,7 @@ async def createCredDef(authorDid, poolHandle):
         print()
         if poolHandle == 0:
             await listPools()
-            pool = input("Input the index of the pool to use: ")
+            pool = input("Input the index of the network to use: ")
             poolHandle = await openPool(pool)
         schemaJsonResp = 'nothing'
         try:
@@ -564,13 +582,13 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
             try:
                 add_taa_req = await ledger.build_get_txn_author_agreement_request(authorDid, None)
             except IndyError:
-                print("Error appending TAA to request, have you created one yet?")
+                print("Error appending TAA to your transaction, has a transaction been created?")
             print()
             add_taa_resp = await ledger.sign_and_submit_request(poolHandle, walletHandle, authorDid, add_taa_req)
             answered = True
-            print("Great! You are all ready to go.")
+            print("You have agreed to the TAA for this session")
         elif agreeTAA == 'n' or agreeTAA == 'N':
-            print("we are sorry, you are not able to write schemas or cred defs to the ledger.")
+            print("We are sorry, you are not able to write schemas or cred defs to the ledger.")
             print()
             print("Press enter to view the menu")
             input()
@@ -591,7 +609,7 @@ async def main():
     await openWallet()
     poolHandle = 0
     poolList = await pool.list_pools()
-    tAA = json.dumps({"key": "value"})
+    tAA = ''
     setup = input("Hello! If you would like to skip the transaction creation wizard, type 'y' otherwise hit enter: ")
     if setup != 'y':
         poolHandle, tAA = await authorWizard()
@@ -614,26 +632,30 @@ async def main():
         elif authorAction == '1':
             authorDid, authorVerKey = await listDids()
             await createSchema(authorDid)
+        
         elif authorAction == '2':
-            tAA = await transactionAuthorAgreement(poolHandle, authorDid)
-            await signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle)
-        elif authorAction == '3':
             #listSchemas
             #createCredDef(schema)
             authorsTxn = await createCredDef(authorDid, poolHandle)
-        elif authorAction == '4':
-            #sendSignCredDef
-            print("Fixme: send cred def")
+        elif authorAction == '3':
+            if poolHandle == 0:
+                print("There is no network connected. Please connect to a network first (option 5)")
+            elif authorsTxn == 'none':
+                print("A transaction has not been created yet. Please create a transaction first (options 1 or 2)")
+            elif authorDid == 'none' or authorVerKey == 'none':
+                print("the Author's DID has not been selected.  Please select a DID to use (option 9)")
+            else:
+                tAA = await transactionAuthorAgreement(poolHandle, authorDid)
+                await signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle)
         elif authorAction == '5':
             network = listNetworks()
             await createPool(network)
-            print("Pool '", network, "' created.")
+            print("Network '", network, "' added.")
         elif authorAction == '6':
             poolList = await listPools()
-            authorPool = input("Choose the index number of the pool you wish to open: ")
+            authorPool = input("Choose the index number of the network you wish to use: ")
             if authorPool == len(poolList) + 1:
                 network = listNetworks()
-      
                 network = await createPool(network)
                 poolHandle = await openPool(network)
             else:
@@ -642,10 +664,10 @@ async def main():
         elif authorAction == '7':
            
             await createWallet()
-            print("wallet has been created")
+            
         elif authorAction == '8':
             await openWallet()
-            print("wallet has been opened")
+            
         elif authorAction == '9':
 
             await createDid()
