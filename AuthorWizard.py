@@ -2,6 +2,8 @@ import json
 from posixpath import join
 import asyncio
 import os
+import logging
+from logging import ERROR, WARNING, INFO, DEBUG, CRITICAL
 import urllib
 import datetime
 import secrets
@@ -11,6 +13,8 @@ from ctypes import cdll
 from indy import ledger, did, wallet, pool, anoncreds
 from indy.error import ErrorCode, IndyError
 import platform
+
+os.add_dll_directory(os.getenv('LIBINDY_DIR'))
 
 walletHandle = 0
 
