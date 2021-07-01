@@ -41,3 +41,15 @@ Python program to walk through the author and endorser workflow to create schema
 ### MacOs
 
 #### Apple Setup Instructions
+
+## Running Instructions
+
+### Running using Docker
+
+#### Endorser
+
+- docker build -t endorser-wizard -f endorser-docker-file .
+- docker run --rm -it -v <Path to git repository>/author-endorser-wizards:/root/author-endorser-wizards:z -v <Path to .indy_client>/wallet:/.indy_client/wallet:z -v <Path to .indy_client>/pool:/.indy_client/pool:z endorser-wizard \(use backslashes if on windows\)  
+#### Author
+- docker build -t author-wizard -f author-docker-file .
+- docker run --rm -it -v <Path to git repository>\author-endorser-wizards:/root/author-endorser-wizards:z -v <Path to .indy_client>\wallet:/.indy_client/wallet:z -v <Path to .indy_client>\pool:/.indy_client/pool:z author-wizard
