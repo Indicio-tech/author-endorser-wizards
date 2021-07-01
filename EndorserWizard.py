@@ -258,6 +258,7 @@ async def createWallet():
  
 def listWallets():
     userDir = os.path.expanduser("~")
+    walletList = []
     dirExists = True
     try:
         walletList = os.listdir(userDir + "/.indy_client/wallet/")
@@ -405,7 +406,6 @@ def displayMenu():
 
 async def endorserWizard():
     print("Hello, welcome to the Endorser Signing Wizard!")
-    await openWallet()
     await listPools()
     network = input("Choose the pool you want to open: ")
     poolHandle = await openPool(network)
