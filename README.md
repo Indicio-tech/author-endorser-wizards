@@ -32,7 +32,7 @@ Python program to walk through the author and endorser workflow to create schema
 - Install Python 3.9
 - download latest from https://repo.sovrin.org/windows/libindy/stable
 - extract the libindy folder to your desired directory
-- Run in command prompt, set LIBINDY_DIR= \<Your path to libindy folder\>
+- Run in command prompt, set LIBINDY_DIR= \<Full path to the libindy folder\>
 - set PYTHONPATH=C:\Python39\Lib\site-packages
 - set PATH=C:\Python39
 - pip3 install asyncio aiohttp indy base58 Python3-indy
