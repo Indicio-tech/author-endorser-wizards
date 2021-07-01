@@ -14,7 +14,7 @@ from indy import ledger, did, wallet, pool, anoncreds
 from indy.error import ErrorCode, IndyError
 import platform
 
-os.add_dll_directory(os.getenv('LIBINDY_DIR'))
+#os.add_dll_directory(os.getenv('LIBINDY_DIR'))
 
 walletHandle = 0
 
