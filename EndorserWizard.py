@@ -120,7 +120,7 @@ def listNetworks():
     print(" 2: indicioDemonet")
     print(" 3: indicioMainnet")
  
-    network = input("which network do you want to use? : ")
+    network = input("which network do you want to add? : ")
  
     if network == '1':
         network = "indicioTestnet"
@@ -152,7 +152,7 @@ async def createPool(network):
         await pool.create_pool_ledger_config(network, configJson)
     except:
         print("\n")
-        print("Error creating pool")
+        print("Error connecting to network")
         print("\n")
     
     return network
@@ -175,7 +175,7 @@ async def openPool(network):
         pool_handle = await pool.open_pool_ledger(config_name=network, config=None)
     except:
         print("\n")
-        print("Error opening pool '" + network +"'")
+        print("Error connecting to network '" + network +"'")
         print("\n")
     return pool_handle
  
@@ -185,13 +185,13 @@ async def listPools():
         poolList = await pool.list_pools()
     except:
         print("\n")
-        print("Error creating list of pools")
+        print("Error creating list of networks")
         print("\n")
 
-    print("Endorser's Pools:")
+    print("Endorser's Networks:")
     for i in range(len(poolList)):
         print("   " + str(i + 1) + ":", *list(poolList[i].values()))
-    print("   " + str(len(poolList)+1) + ": Create New Pool")
+    print("   " + str(len(poolList)+1) + ": Add a Network")
 
     return poolList
 
@@ -202,7 +202,7 @@ async def transactionAuthorAgreement(poolHandle, endorserDid):
     print("Please agree to the Transaction Author Agreement(TAA) before continuing.")
     print()
     print("The TAA can be read at https://github.com/Indicio-tech/indicio-network/blob/main/TAA/TAA.md if connecting to an Indicio network, which includes agreeing to not place any Personaly Identifiable Information(PII) or any illeagal material on the ledger.")
-    
+    add_taa_resp = ''
     while not answered:
         agreeTAA = input("Do you accept the TAA(Y/N)?")
         if agreeTAA == 'y' or agreeTAA == 'Y':
