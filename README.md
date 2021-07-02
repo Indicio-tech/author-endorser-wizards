@@ -49,9 +49,9 @@ Python program to walk through the author and endorser workflow to create schema
 #### Endorser
 
 - docker build -t endorser-wizard -f endorser-docker-file .
-- docker run --rm -it -v <Path to git repository>/author-endorser-wizards:/root/author-endorser-wizards:z -v <Path to .indy_client>/wallet:/.indy_client/wallet:z -v <Path to .indy_client>/pool:/.indy_client/pool:z endorser-wizard 
-  - \(If on windows run: docker run --rm -it -v <Path to git repository>\author-endorser-wizards:/root/author-endorser-wizards:z -v <Path to .indy_client>\wallet:/.indy_client/wallet:z -v <Path to .indy_client>\pool:/.indy_client/pool:z endorser-wizard\)
+- docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/.indy_client/pool:z endorser-wizard 
+  - \(If on windows run: docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/.indy_client/pool:z endorser-wizard\)
 #### Author
 - docker build -t author-wizard -f author-docker-file .
-- docker run --rm -it -v <Path to git repository>/author-endorser-wizards:/root/author-endorser-wizards:z -v <Path to .indy_client>/wallet:/.indy_client/wallet:z -v <Path to .indy_client>/pool:/.indy_client/pool:z author-wizard
-  - \(If on windows run: docker run --rm -it -v <Path to git repository>\author-endorser-wizards:/root/author-endorser-wizards:z -v <Path to .indy_client>\wallet:/.indy_client/wallet:z -v <Path to .indy_client>\pool:/.indy_client/pool:z author-wizard
+- docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/.indy_client/pool:z author-wizard
+  - \(If on windows run: docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/.indy_client/pool:z author-wizard
