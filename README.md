@@ -3,16 +3,8 @@ Python program to walk through the author and endorser workflow to create schema
 
 ## Docker Instructions
 
-Navigate to your git directory, if you don't have one
-* mkdir git
-* cd git
-
-Once in your git directory,
-
-* git clone https://github.com/Indicio-tech/author-endorser-wizards.git
-* cd author-endorser-wizards
-
 ### Running the Endorser
+once you have cloned the repo,
 
 * docker build -t endorser-wizard -f endorser-docker-file .
 * docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/.indy_client/pool:z endorser-wizard 
