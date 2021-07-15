@@ -14,7 +14,9 @@ from indy import ledger, did, wallet, pool, anoncreds
 from indy.error import ErrorCode, IndyError
 import platform
 
-#os.add_dll_directory(os.getenv('LIBINDY_DIR'))
+os.system("clear")
+if platform.system() == "Windows":
+    os.add_dll_directory(os.getenv('LIBINDY_DIR'))
 
 walletHandle = 0
 
@@ -28,13 +30,13 @@ def downloadGenesis(networkUrl):
 
 async def createPool(network):
 
-    if "indicioTestnet" == network:
+    if "indicioTestNet" == network:
         network_genesis_url="https://raw.githubusercontent.com/Indicio-tech/indicio-network/main/genesis_files/pool_transactions_testnet_genesis"
-    elif "indicioDemonet" == network:
+    elif "indicioDemoNet" == network:
         network_genesis_url="https://raw.githubusercontent.com/Indicio-tech/indicio-network/main/genesis_files/pool_transactions_demonet_genesis"
-    elif "indicioMainnet" == network:
+    elif "indicioMainNet" == network:
         network_genesis_url="https://raw.githubusercontent.com/Indicio-tech/indicio-network/main/genesis_files/pool_transactions_mainnet_genesis"
-    else: network = "Network name not found"
+    else: network = "indicioTestNet"
 
     downloadGenesis(network_genesis_url)
 
@@ -46,6 +48,8 @@ async def createPool(network):
 
     try:
         await pool.create_pool_ledger_config(network, configJson)
+    except PoolLedgerConfigAlreadyExistsError:
+        print("The Network selected already exsists")
     except:
         print("\n")
         print("Error Adding Network")
@@ -65,14 +69,19 @@ async def openPool(network):
 
     pool_handle = 0
     try:
+        print("connecting to the network '" + network + "'...")
         pool_handle = await pool.open_pool_ledger(config_name=network, config=None)
     except:
         print("\n")
         print("Error connecting to network '" + network +"'")
         print("\n")
+    else:
+        print("...done")
+        print()
     return pool_handle
  
 async def listPools():
+    print("\nConnect to a Network\n--------------------\n")
     try:
         poolList = await pool.list_pools()
     except:
@@ -202,16 +211,19 @@ async def openWallet():
         print("\n")
     else:
         print("...done")
+        print('\n')
 
     return
     
 async def authorWizard():
     poolHandle = None
-    print("Welcome to the Author Transaction Creation Wizard!")
+    print("\nAuthor Wizard\n-------------\n")
+    print("To begin, you must select or add the network that you would like to use for issuing credentials. If you select \"Add New Network\" you will be given a choice of which network to add to your list  of choices, then that network will be used during the rest  of this session.")
+    print()
     poolList = await listPools()
-    userPool = input("Choose the index number of the network you want to use: ")
+    userPool = input("Select the network you want to use("+str(len(poolList)+1)+"): ")
     print("\n")
-    if userPool == str(len(poolList) + 1):
+    if userPool == str(len(poolList) + 1) or userPool == '':
        network = listNetworks()
        
        network = await createPool(network)
@@ -221,7 +233,8 @@ async def authorWizard():
   
    #print("Below is a list of wallets:")
    
-    print("Here is the list of dids in your wallet.")
+    print("Here is the list of DIDs in your wallet.")
+    print()
     authorDid, authorVerKey = await listDids()
    #listDids()
     #authorDid = input("Choose the index number of the did you want to use: ")
@@ -265,7 +278,8 @@ async def authorWizard():
     return poolHandle, tAA
 
 def displayMenu():
-    print("Menu:")
+    print("Menu\n----\n")
+    print("Options")
     print("  0: Author Wizard")
     print("  1: Create Schema")
     print("  2: Create Credential Definition")
@@ -280,24 +294,27 @@ def displayMenu():
     print("  q: Quit")
 
 def listNetworks():
-    print(" 1: indicioTestnet")
-    print(" 2: indicioDemonet")
-    print(" 3: indicioMainnet")
+    print("Indicio Networks\n")
+    print(" 1: Indicio MainNet")
+    print(" 2: Indicio DemoNet")
+    print(" 3: Indicio TestNet\n")
  
-    network = input("Which network do you want to use? : ")
- 
+    network = input("Select a network to add(3): ")
+    print("\n")
     if network == '1':
-        network = "indicioTestnet"
+        network = "indicioMainNet"
     elif network == '2':
-        network = "indicioDemonet"
-    elif network == '3':
-        network = "indicioMainnet"
+        network = "indicioDemoNet"
+    else:
+        network = "indicioTestNet"
+    
     return network
  
 async def createDid():
     
 
-    seed = input("Input the seed for your did, if it is blank it will be generated for you:")
+    seed = input("Input the seed for your DID, if it is blank it will be generated for you:")
+    print()
     if seed == '':
         seed = seed.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
         print("New Seed:", seed)
@@ -317,13 +334,15 @@ async def createDid():
     else:
         print("Created DID:", authorDid[0])
         print("VerKey:", authorDid[1])
-        print("It is advised to save this information in a secure location")
+        print()
+        input("After you have saved your Seed in a safe place and recorded your Author DID and Verkey for later use, please hit enter to continue.")
         print()
 
-    metadataChoice = input("Would you like to add metadata for your did? (y/n): ")
-    print()
-    if metadataChoice == 'y':
-        didMetadata = input("Input metadata here: ")
+    metadataChoice = input("Would you like to add metadata for your did? (Y/n): ")
+    if metadataChoice == 'n' or metadataChoice == 'N':
+        print()
+    else:
+        didMetadata = "Author DID created by wizard"
         print("\n")
         try:
             await did.set_did_metadata(walletHandle, authorDid[0], didMetadata)
@@ -361,12 +380,15 @@ async def listDids():
 
     print("     " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
     print()
-    index = int(input("Choose the index of the did you would like to use (or choose 'create' to make a new one): "))
-    index = index - 1
-    if index == len(didList):
+    index = input("Choose the index of the did you would like to use (" + str(len(didList)+1) + "): ")
+    print()
+    
+    if index == '':
         authorDid, authorVerKey = await createDid()
-        
+    elif index == str(len(didList)+1):
+        authorDid, authorVerKey = await createDid()
     else:
+        index = int(index) - 1
         authorDid = didList[index]["did"]
         authorVerKey = didList[index]["verkey"]
         
@@ -465,6 +487,7 @@ File name:""", signedFileName)
     return
 
 async def createSchema(authorDid):
+    print("Schema Creation\n---------------\n")
     name = input("Enter name of schema: ")
     version = input("Enter version: ")
     attrs = []
@@ -549,7 +572,7 @@ async def createCredDef(authorDid, poolHandle):
             invalidSchema = False
         except KeyError:
             print("Something went wrong when getting the schema")
-            print("Most likely the schema is not on the ledger, Please try again with a valid schema id")
+            print("Most likely the schema is not on the ledger, Please try again with a valid schema ID")
             invalidSchema = True
             continue
         
@@ -578,7 +601,7 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
     
     print("Please agree to the Transaction Author Agreement(TAA) before continuing.")
     print()
-    print("The TAA can be read at https://github.com/Indicio-tech/indicio-network/blob/main/TAA/TAA.md if connecting to an Indicio network, which includes agreeing to not place any Personaly Identifiable Information(PII) or any illeagal material on the ledger.")
+    print("The TAA can be read at https://github.com/Indicio-tech/indicio-network/blob/main/TAA/TAA.md if connecting to an Indicio network, which includes agreeing to not place any Personally Identifiable Information(PII) or any illeagal material on the ledger.")
     add_taa_resp = ''
     while not answered:
         agreeTAA = input("Do you accept the TAA? (Y/N): ")
@@ -592,7 +615,7 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
             answered = True
             print("You have agreed to the TAA for this session")
         elif agreeTAA == 'n' or agreeTAA == 'N':
-            print("We are sorry, you are not able to write schemas or cred defs to the ledger.")
+            print("We are sorry, you are not able to write schemas or cred defs to the ledger until you agree to the TAA.")
             print()
             print("Press enter to view the menu")
             input()
@@ -614,8 +637,15 @@ async def main():
     poolHandle = 0
     poolList = await pool.list_pools()
     tAA = ''
-    setup = input("Hello! If you would like to skip the transaction creation wizard, type 'y' otherwise hit enter: ")
-    if setup != 'y':
+    setup = input("""Welcome to the Author wizard!
+If you are running this, it means that you would like to issue Hyperledger Indy based credentials, but
+you are not an Endorser on the network from which you want to issue them. This script will help you
+create and prepare the transactions you need that you can then send to an Endorser for their signature
+before you send them to the network. The "wizard" will guide you through each step of the process, but
+you can perform individual tasks by referring to the main menu. (Hit 'enter' now to use the wizard, or
+type 'm' to go to the main menu):""")
+    os.system("clear")
+    if setup != 'm':
         poolHandle, tAA = await authorWizard()
   
  
