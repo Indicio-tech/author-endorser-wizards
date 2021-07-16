@@ -99,7 +99,7 @@ async def listPools():
  
 async def createWallet():
     walletName = "wizard_wallet" # input("What would you like to name your wallet?: ")
-   #seed = input("Insert your seed here. If you want a random seed, insert nothing: ")
+    #seed = input("Insert your seed here. If you want a random seed, insert nothing: ")
     walletKey = "wizard_wallet" #wallet.generate_wallet_key(seed)
  
     walletID = {
@@ -399,8 +399,13 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
     tAA = tAA["result"]
 # note: check for endorser using get nym
     utctimestamp = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-    fileName = "authors-txn.txt"
-    signedFileName = "authors-signed-txn.txt"
+    slash = '/'
+    if platform.system() == "windows":
+        slash ='\\'
+    fileName = "authors-txn"
+    filePath = os.getcwd() + slash + fileName
+    signedFileName = "authors-signed-txn"
+    signedFilePath = os.getcwd() + slash + signedFileName
 
     try:
         authorsTxn = await ledger.append_txn_author_agreement_acceptance_to_request(authorsTxn, tAA["data"]["text"], tAA["data"]["version"], None, 'for_session', utctimestamp)
@@ -430,23 +435,22 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
     }
     authorsTxnWithDid = json.dumps(authorsTxnWithDid)
     
-    slash = '/'
-    if platform.system() == "windows":
-        slash ='\\'
+    
     if os.path.exists(fileName):
         input("A file named '"+fileName+"""' already exists and will be over written.
 If you would like to keep the original file, rename it now.
 Press Enter to continue""")
 
     print("Transaction file: author-endorser-wizards" + slash + fileName)
-
+    print(os.getcwd())
     try:
-        txnFile = open(fileName, "x")
+        txnFile = open(filePath, "x")
     except:
         print("Replacing the previous version of " + fileName + "...")
-        txnFile = open(fileName, "w")
+        txnFile = open(filePath, "w")
     else: 
         print("Writing", fileName + "...")
+
     txnFile.write(authorsTxnWithDid)
     txnFile.close()
     print("...done")
@@ -460,9 +464,9 @@ Copy that file to the 'author-endorser-wizards' directory then press enter.""")
     while error:
         try:
             authorsSignedTxnFile = open(signedFileName)
-            error == False
+            error = False
         except FileNotFoundError:
-            print("The file does not exsist, Please ensure that the endorser sent you the correct file and it is in the correct directory.")
+            print("The file does not exist, Please ensure that the endorser sent you the correct file and it is in the correct directory.")
             print("""File path: author-endorser-wizards/
 File name:""", signedFileName)
             input("Press enter when completed")
@@ -673,7 +677,7 @@ type 'm' to go to the main menu):""")
             authorsTxn = await createCredDef(authorDid, poolHandle)
         elif authorAction == '3':
             if poolHandle == 0:
-                print("There is no network connected. Please connect to a network first (option 5)")
+                print("There is no network connected. Please connect to a network first (option 6)")
             elif authorsTxn == 'none':
                 print("A transaction has not been created yet. Please create a transaction first (options 1 or 2)")
             elif authorDid == 'none' or authorVerKey == 'none':

@@ -84,12 +84,17 @@ async def listDids():
     return endorserDid
 
 async def signTxn(poolHandle, endorserDid, tAA):
-    fileName = "authors-txn.txt"
-    signedFileName = "authors-signed-txn.txt"
+    slash = '/'
+    if platform.system() == "windows":
+        slash ='\\'
+    fileName = "authors-txn"
+    filePath = os.getcwd() + slash + fileName
+    signedFileName = "authors-signed-txn"
+    signedFilePath = os.getcwd() + slash + signedFileName
     input("""The author will have sent you a Transaction in a file.
 Copy that file to the 'author-endorser-wizards' directory then press enter.""")
     
-    authorTxnFile = open(fileName)
+    authorTxnFile = open(filePath)
     authorTxnReqJson = authorTxnFile.read()
     authorTxnFile.close()
     await writeAuthorToLedger(poolHandle, authorTxnReqJson, endorserDid, tAA)
@@ -101,10 +106,10 @@ Copy that file to the 'author-endorser-wizards' directory then press enter.""")
 
     endorsedTxn = await ledger.multi_sign_request(walletHandle, endorserDid, authorTxnReq)
     
-    endorsedTxnFile = open(signedFileName, 'w')
+    endorsedTxnFile = open(signedFilePath, 'w')
     endorsedTxnFile.write(endorsedTxn)
     endorsedTxnFile.close()
-    return endorsedTxn, signedFileName
+    return endorsedTxn, signedFilePath
 
 
 def downloadGenesis(networkUrl):
