@@ -232,9 +232,7 @@ async def authorWizard():
        poolHandle = await openPool(userPool)
   
    #print("Below is a list of wallets:")
-   
-    print("Here is the list of DIDs in your wallet.")
-    print()
+    
     authorDid, authorVerKey = await listDids()
    #listDids()
     #authorDid = input("Choose the index number of the did you want to use: ")
@@ -249,13 +247,14 @@ async def authorWizard():
     print("\n")
     schemaID = ''
 
-    schemaChoice = input("""Do you want to... 
- 1. Create a new schema or 
- 2. Use an existing one?
+    schemaChoice = input("""The first step to creating a credential is to create a new schema or select an existing one.  A schema contains a list of attributes or fields that are to be associated with the credential that you will be issuing.
+ 1. Create a new schema 
+ 2. Use an existing one
 
  (1/2):""")
     while True:
         if schemaChoice == '1':
+            print('\n')
             schemaTxn = await createSchema(authorDid)
             await signSendTxn(authorDid, authorVerKey, schemaTxn, tAA, poolHandle)
             break
@@ -264,9 +263,9 @@ async def authorWizard():
         else:
             print("Invalid input, please input 1 or 2")
             print()
-            schemaChoice = input("""Do you want to... 
- 1. Create a new schema or 
- 2. Use an existing one?
+            schemaChoice = input("""
+ 1. Create a new schema 
+ 2. Use an existing one
 
  (1/2):""")
 
@@ -313,11 +312,11 @@ def listNetworks():
 async def createDid():
     
 
-    seed = input("Input the seed for your DID, if it is blank it will be generated for you:")
+    seed = input("A 'seed' is required for you to be able to add your Author DID to any other wallet. This seed should be stored in a safe place.\nPlease enter an alpha-numeric 32 character seed, or hit 'enter' to have one created for you: ")
     print()
     if seed == '':
         seed = seed.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
-        print("New Seed:", seed)
+        print("Author Seed:", seed)
     
     
     seedJson = {
@@ -332,8 +331,8 @@ async def createDid():
         print("Error creating DID")
         print("\n")
     else:
-        print("Created DID:", authorDid[0])
-        print("VerKey:", authorDid[1])
+        print("Author DID:", authorDid[0])
+        print("Author VerKey:", authorDid[1])
         print()
         input("After you have saved your Seed in a safe place and recorded your Author DID and Verkey for later use, please hit enter to continue.")
         print()
@@ -343,7 +342,7 @@ async def createDid():
         print()
     else:
         didMetadata = "Author DID created by wizard"
-        print("\n")
+        print()
         try:
             await did.set_did_metadata(walletHandle, authorDid[0], didMetadata)
         except IndyError:
@@ -358,6 +357,9 @@ async def createDid():
     return authorDid
 
 async def listDids():
+    print("\nAuthors DIDs\n------------\n")
+    print("Adding issuer transactions to the ledger requires you to create and maintain an \"Author DID\".  Select your Author DID from the following list, or create a new one and save the seed in a safe place. ")
+    print()
     try:
         didListJson = await did.list_my_dids_with_meta(walletHandle)
     except:
@@ -380,7 +382,7 @@ async def listDids():
 
     print("     " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
     print()
-    index = input("Choose the index of the did you would like to use (" + str(len(didList)+1) + "): ")
+    index = input("Select an Author DID (" + str(len(didList)+1) + "): ")
     print()
     
     if index == '':
@@ -441,8 +443,8 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
 If you would like to keep the original file, rename it now.
 Press Enter to continue""")
 
-    print("Transaction file: author-endorser-wizards" + slash + fileName)
-    print(os.getcwd())
+    print("Transaction file:", os.getcwd() + slash + fileName)
+    print()
     try:
         txnFile = open(filePath, "x")
     except:
@@ -456,19 +458,19 @@ Press Enter to continue""")
     print("...done")
     print()
     input("""The endorser needs to sign this transaction.  
-Send the file named '"""+fileName+"' to the endorser.")
+Send the file named '"""+fileName+"' to the endorser.\n\n")
 
     input("""The Endorser will have sent a file named '"""+signedFileName+"""'.
-Copy that file to the 'author-endorser-wizards' directory then press enter.""")
+Copy that file to the '""" + os.getcwd() + slash + """' directory then press enter.""")
     error = True
     while error:
         try:
             authorsSignedTxnFile = open(signedFileName)
             error = False
         except FileNotFoundError:
-            print("The file does not exist, Please ensure that the endorser sent you the correct file and it is in the correct directory.")
-            print("""File path: author-endorser-wizards/
-File name:""", signedFileName)
+            print("The file does not exist, Please ensure that the endorser sent you the correct file and it is in the correct directory.\n")
+            print("File path:", os.getcwd() + slash)
+            print("File name:", signedFileName, '\n')
             input("Press enter when completed")
             error = True
     authorsSignedTxn = authorsSignedTxnFile.read()
@@ -498,7 +500,7 @@ async def createSchema(authorDid):
 
     add = True
     i = 0
-    print("Enter the schema's attributes names one at a time ('done' to stop, ... to restart).")
+    print("Enter the schema's attributes names one at a time ('done' to stop, 'restart' to start over).")
     while add:
         attrs.append(input("Attribute: "))
         if attrs[i] == '':
@@ -507,7 +509,7 @@ async def createSchema(authorDid):
         elif attrs[i] == "done":
             attrs.remove("done")
             add = False
-        elif attrs[i] == "...":
+        elif attrs[i] == "restart":
             attrs.clear()
             i -= i + 1
         i += 1
@@ -528,7 +530,8 @@ async def createSchema(authorDid):
         print("Error building schema request")
         print("\n")
     if not error:
-        print("Schema ID:", schemaId)
+        print()
+        print("Schema ID:", schemaId, '\n')
         print("This will be required to create a credential definition.  Please copy or save for later use.")
         print()
         return schemaTxn
@@ -602,10 +605,12 @@ async def createCredDef(authorDid, poolHandle):
 async def transactionAuthorAgreement(poolHandle, authorDid):
     answered = False
     add_taa_resp_json = json.dumps({"response": "none"})
+
+    print("Transaction Author Agreement\n----------------------------\n")
     
     print("Please agree to the Transaction Author Agreement(TAA) before continuing.")
     print()
-    print("The TAA can be read at https://github.com/Indicio-tech/indicio-network/blob/main/TAA/TAA.md if connecting to an Indicio network, which includes agreeing to not place any Personally Identifiable Information(PII) or any illeagal material on the ledger.")
+    print("Authors must agree to the Transaction Author Agreement(TAA) that exists on the network that they want to use for issuance. The TAA can be read at https://github.com/Indicio-tech/indicio-network/blob/main/TAA/TAA.md if connecting to an Indicio network, which includes agreeing to not place any Personally Identifiable Information(PII) or any illeagal material on the ledger.")
     add_taa_resp = ''
     while not answered:
         agreeTAA = input("Do you accept the TAA? (Y/N): ")
