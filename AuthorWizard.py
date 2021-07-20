@@ -310,13 +310,31 @@ def listNetworks():
     return network
  
 async def createDid():
-    
+    valid = False
 
-    seed = input("A 'seed' is required for you to be able to add your Author DID to any other wallet. This seed should be stored in a safe place.\nPlease enter an alpha-numeric 32 character seed, or hit 'enter' to have one created for you: ")
-    print()
-    if seed == '':
-        seed = seed.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
-        print("Author Seed:", seed)
+    
+    print("A 'seed' is required for you to be able to add your Author DID to any other wallet. This seed should be stored in a safe place.")
+    while not valid:
+        seed = input("Please enter an alpha-numeric 32 character seed, or hit 'enter' to have one created for you: ")
+        for i in range(len(seed)):
+            if not seed[i].isalnum():
+                print("\nThe seed you entered is invalid because it contains an invald character.\n") 
+                valid = False
+                break
+        print()
+        if len(seed) < 32:
+            print("\nThe seed you entered is too short\n")
+            valid = False
+        elif len(seed) > 32:
+            print("\nThe seed you entered is too long\n")
+            valid = False
+        else:
+            valid = True
+            break
+        if seed == '':
+            seed = seed.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
+            print("Author Seed:", seed)
+            valid = True
     
     
     seedJson = {
@@ -416,7 +434,7 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
         print("Error appending the TAA")
         print("\n")
         
-    endorserDid = input("input your endorser's did: ")
+    endorserDid = input("An Endorser must now sign your schema transaction before you can write it to the network.  Please enter the Endorser DID of your chosen Endorser: ")
     try:
         authorsTxn = await ledger.append_request_endorser(authorsTxn, endorserDid)
     except:
@@ -500,10 +518,33 @@ async def createSchema(authorDid):
 
     add = True
     i = 0
+    print("Schema attributes must be numbers or lowercase letters without spaces or special characters. (underscores are ok)")
     print("Enter the schema's attributes names one at a time ('done' to stop, 'restart' to start over).")
     while add:
         attrs.append(input("Attribute: "))
-        if attrs[i] == '':
+        valid = True
+        for j in range(len(attrs[i])):
+            if attrs[i][j].isupper():
+                print("The attribute entered is invalid and will be removed(uppercase)")
+                valid = False
+                break
+            elif attrs[i][j].isspace():
+                print("The attribute entered is invalid and will be removed(space)")
+                valid = False
+                break
+            elif not attrs[i][j].isalnum():
+                if attrs[i][j] == '_':
+                    valid = True
+                else:
+                    print("The attribute entered is invalid and will be removed(special character)")
+                    valid = False
+                    break
+            else:
+                valid = True
+        if not valid:
+            attrs.remove(attrs[i])
+            i -= 1
+        elif attrs[i] == '':
             attrs.remove(attrs[i])
             i -= 1
         elif attrs[i] == "done":
