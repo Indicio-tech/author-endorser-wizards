@@ -11,7 +11,7 @@ import string
 from aiohttp import web
 from ctypes import cdll
 from indy import ledger, did, wallet, pool, anoncreds
-from indy.error import ErrorCode, IndyError
+from indy.error import ErrorCode, IndyError, PoolLedgerConfigAlreadyExistsError
 import platform
 
 os.system("clear")
@@ -248,6 +248,7 @@ async def authorWizard():
     schemaID = ''
 
     schemaChoice = input("""The first step to creating a credential is to create a new schema or select an existing one.  A schema contains a list of attributes or fields that are to be associated with the credential that you will be issuing.
+
  1. Create a new schema 
  2. Use an existing one
 
@@ -314,27 +315,32 @@ async def createDid():
 
     
     print("A 'seed' is required for you to be able to add your Author DID to any other wallet. This seed should be stored in a safe place.")
+    print()
     while not valid:
         seed = input("Please enter an alpha-numeric 32 character seed, or hit 'enter' to have one created for you: ")
+        
+        print()
+        if seed == '':
+            seed = seed.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
+            print("Author Seed:", seed)
+            valid = True
+        elif len(seed) < 32:
+            print("\nThe seed you entered is too short\n")
+            valid = False
+            continue
+        elif len(seed) > 32:
+            print("\nThe seed you entered is too long\n")
+            valid = False
+            continue
+        else:
+            valid = True
+            break
         for i in range(len(seed)):
             if not seed[i].isalnum():
                 print("\nThe seed you entered is invalid because it contains an invald character.\n") 
                 valid = False
                 break
-        print()
-        if len(seed) < 32:
-            print("\nThe seed you entered is too short\n")
-            valid = False
-        elif len(seed) > 32:
-            print("\nThe seed you entered is too long\n")
-            valid = False
-        else:
-            valid = True
-            break
-        if seed == '':
-            seed = seed.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
-            print("Author Seed:", seed)
-            valid = True
+        
     
     
     seedJson = {
@@ -355,22 +361,19 @@ async def createDid():
         input("After you have saved your Seed in a safe place and recorded your Author DID and Verkey for later use, please hit enter to continue.")
         print()
 
-    metadataChoice = input("Would you like to add metadata for your did? (Y/n): ")
-    if metadataChoice == 'n' or metadataChoice == 'N':
-        print()
-    else:
-        didMetadata = "Author DID created by wizard"
-        print()
-        try:
-            await did.set_did_metadata(walletHandle, authorDid[0], didMetadata)
-        except IndyError:
-            print("\n")
-            print("Error setting metadata")
-            print("\n")
-            raise
-        except:
-            print("system error")
-            raise
+    
+    didMetadata = "Author DID created by wizard"
+    print()
+    try:
+        await did.set_did_metadata(walletHandle, authorDid[0], didMetadata)
+    except IndyError:
+        print("\n")
+        print("Error setting metadata")
+        print("\n")
+        raise
+    except:
+        print("system error\n")
+        raise
 
     return authorDid
 
@@ -455,14 +458,16 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
     }
     authorsTxnWithDid = json.dumps(authorsTxnWithDid)
     
-    
-    if os.path.exists(fileName):
-        input("A file named '"+fileName+"""' already exists and will be over written.
-If you would like to keep the original file, rename it now.
-Press Enter to continue""")
-
-    print("Transaction file:", os.getcwd() + slash + fileName)
+    print("We have completed the first phase of preparing your Schema transaction!\n  The transaction will be in a file named '" + os.getcwd() + slash + fileName + "'.\n  ")
     print()
+    if os.path.exists(fileName):
+        input("A file named '"+fileName+"""' already exists and will be deleted.
+Press Enter to continue""")
+        os.remove(fileName)
+    if os.path.exists(signedFileName):
+        os.remove(signedFileName)
+
+    
     try:
         txnFile = open(filePath, "x")
     except:
@@ -475,8 +480,7 @@ Press Enter to continue""")
     txnFile.close()
     print("...done")
     print()
-    input("""The endorser needs to sign this transaction.  
-Send the file named '"""+fileName+"' to the endorser.\n\n")
+    input("Please send this file to your endorser so that they can sign and return it to you.")
 
     input("""The Endorser will have sent a file named '"""+signedFileName+"""'.
 Copy that file to the '""" + os.getcwd() + slash + """' directory then press enter.""")
@@ -512,14 +516,46 @@ Copy that file to the '""" + os.getcwd() + slash + """' directory then press ent
 
 async def createSchema(authorDid):
     print("Schema Creation\n---------------\n")
+    validVer = False
+    hasDot = False
+    
     name = input("Enter name of schema: ")
-    version = input("Enter version: ")
+    print("\nA schema version must only have numbers with a single dot somewhere between the first and last character. It must have at least one number before and after the dot\nExample: 1.0, 35.2, 0.12345")
+    print()
+    while not validVer:
+        version = str(input("Enter version (1.0): "))
+        for i in range(len(version)-2):
+            if version[i+1] == '.':
+                hasDot = True
+            if (version[i+1].isnumeric() or version[i+1] == '.') and (version[i].isnumeric() or version[i] == '.') and (version[i+2].isnumeric() or version[i+2] == '.'):
+                validVer = True
+            else:
+                validVer = False
+                print("The version you entered is invalid.(not numeric)\n")
+                break
+
+        if version == '':
+            version = '1.0'
+            validVer = True
+        elif version[0] == '.' or version[len(version)-1] == '.':
+            validVer = False
+            print("The version you entered is invalid.(invalid format)\n")
+        elif len(version) <= 2:
+            print("The version you entered is invalid.(too short)\n")
+            validVer = False
+        elif not validVer:
+            continue
+        elif not hasDot:
+            print("The version you entered is invalid.(no dot)\n")
+            validVer = False
+            
+
     attrs = []
 
     add = True
     i = 0
-    print("Schema attributes must be numbers or lowercase letters without spaces or special characters. (underscores are ok)")
-    print("Enter the schema's attributes names one at a time ('done' to stop, 'restart' to start over).")
+    print("\nSchema attributes must be numbers or lowercase letters without spaces or special characters. (underscores are ok)")
+    print("Enter the schema's attributes names one at a time ('done' to stop, 'restart' to start over).\n")
     while add:
         attrs.append(input("Attribute: "))
         valid = True
@@ -572,8 +608,8 @@ async def createSchema(authorDid):
         print("\n")
     if not error:
         print()
+        print("Please record your new Schema ID.  It will be used later when you create credential definitions.\n\n")
         print("Schema ID:", schemaId, '\n')
-        print("This will be required to create a credential definition.  Please copy or save for later use.")
         print()
         return schemaTxn
     else:
@@ -652,6 +688,7 @@ async def transactionAuthorAgreement(poolHandle, authorDid):
     print("Please agree to the Transaction Author Agreement(TAA) before continuing.")
     print()
     print("Authors must agree to the Transaction Author Agreement(TAA) that exists on the network that they want to use for issuance. The TAA can be read at https://github.com/Indicio-tech/indicio-network/blob/main/TAA/TAA.md if connecting to an Indicio network, which includes agreeing to not place any Personally Identifiable Information(PII) or any illeagal material on the ledger.")
+    print()
     add_taa_resp = ''
     while not answered:
         agreeTAA = input("Do you accept the TAA? (Y/N): ")
