@@ -28,6 +28,7 @@ role = "Endorser"
 
 
 async def signTxn(poolHandle, endorserDid, tAA):
+    print("\nTransaction Signing\n-------------------\n"
     slash = '/'
     if platform.system() == "windows":
         slash ='\\'
@@ -35,8 +36,8 @@ async def signTxn(poolHandle, endorserDid, tAA):
     filePath = os.getcwd() + slash + fileName
     signedFileName = "authors-signed-txn"
     signedFilePath = os.getcwd() + slash + signedFileName
-    input("""The author will have sent you a Transaction in a file.
-Copy that file to the 'author-endorser-wizards' directory then press enter.""")
+    input("""The author will have sent you a Transaction in a file. Copy that
+file to the 'author-endorser-wizards' directory then press enter.""")
 
         
     authorTxnFile = open(filePath)
@@ -217,15 +218,19 @@ async def writeAuthorToLedger(poolHandle, authorTxnJson, endorserDid, tAA):
             print("Error sending Author DID to ledger because structure was invalid, was it copied correctly?")
         except:
             print("Error sending Author Did to ledger")
-        print("Result:", result)
+        
 
         result = json.loads(result)
+        
         if result["op"] == "REJECT":
+            print("Result:", result, '\n')
             print("Check the above result to identify why writing the authors did to the ledger was rejected")
             exit()
+        else:
+            print("\nSuccessfully wrote DID to ledger.\n")
         
     else:
-        print("DID is on ledger.\n")
+        print("\nDID is on ledger.")
     return
 
 def displayMenu():
@@ -245,6 +250,7 @@ def displayMenu():
 async def endorserWizard():
     poolHandle = None
     network = ''
+    endorsing = True
     print("\nEndorser Wizard\n-------------\n")
     print("To begin, you must select or add the network that the issuer would like to use for issuing credentials. If you select \"Add New Network\" you will be given a choice of which network to add to your list  of choices, then that network will be used during the rest  of this session.")
     print()
@@ -260,11 +266,20 @@ async def endorserWizard():
        poolHandle = await openPool(userPool)
     endorserDid, endorserVerKey = await listDids(role, walletHandle)
     tAA = await transactionAuthorAgreement(poolHandle, walletHandle, endorserDid)
-    input("Press enter to continue when the Author has completed his side.")
+    input("\n\nPress enter to continue when the Author has completed building his transaction.")
+    print()
+    while endorsing:
+        endorsedTxn, endorsedTxnFile = await signTxn(poolHandle, endorserDid, tAA)
+        print('\n')
+        print("Signed txn file:", endorsedTxnFile,"\n\nPass the above Transaction back to the author to send to the ledger.")
+        again = input("do you have another Transaction to sign? (Y/n): ")
+        if again == 'n' or again == 'N':
+            endorsing = False
+        else:
+            continue
+    print("\n")
+    print("Thank you for using the Endorser Wizard.\n\n\n")
 
-    endorsedTxn, endorsedTxnFile = await signTxn(poolHandle, endorserDid, tAA)
-    print('\n')
-    print("Signed txn file:", endorsedTxnFile,"\nPass the above Transaction back to the author to send to the ledger.")
     return network, poolHandle, endorserDid, tAA
 
 async def main():
