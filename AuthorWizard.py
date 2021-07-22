@@ -13,6 +13,7 @@ from ctypes import cdll
 from indy import ledger, did, wallet, pool, anoncreds
 from indy.error import ErrorCode, IndyError, PoolLedgerConfigAlreadyExistsError
 import platform
+import re
 
 
 
@@ -535,35 +536,37 @@ async def createSchema(authorDid):
     hasDot = False
     
     name = input("Enter name of schema: ")
-    print("\nA schema version must only have numbers with a single dot somewhere between the first and last character. It must have at least one number before and after the dot\nExample: 1.0, 35.2, 0.12345")
+    print("\nA schema version must contain either 1 or 2 '.'s, and must have at least one number before and after each '.'\nExamples: 1.0, 35.2.1, 0.12345")
     print()
     while not validVer:
         version = str(input("Enter version (1.0): "))
-        for i in range(len(version)-2):
-            if version[i+1] == '.':
-                hasDot = True
-            if (version[i+1].isnumeric() or version[i+1] == '.') and (version[i].isnumeric() or version[i] == '.') and (version[i+2].isnumeric() or version[i+2] == '.'):
-                validVer = True
-            else:
-                validVer = False
-                print("The version you entered is invalid.(not numeric)\n")
-                break
-
-        if version == '':
-            version = '1.0'
-            validVer = True
-        elif version[0] == '.' or version[len(version)-1] == '.':
-            validVer = False
-            print("The version you entered is invalid.(invalid format)\n")
-        elif len(version) <= 2:
-            print("The version you entered is invalid.(too short)\n")
-            validVer = False
-        elif not validVer:
-            continue
-        elif not hasDot:
-            print("The version you entered is invalid.(no dot)\n")
-            validVer = False
-            
+    #    for i in range(len(version)-2):
+     #       if version[i+1] == '.':
+    #            hasDot = True
+    #        if (version[i+1].isnumeric() or version[i+1] == '.') and (version[i].isnumeric() or version[i] == '.') and (version[i+2].isnumeric() or version[i+2] == '.'):
+    #            validVer = True
+    #        else:
+    #            validVer = False
+    #            print("The version you entered is invalid.(not numeric)\n")
+    #            break
+#
+    #    if version == '':
+    #        version = '1.0'
+    #        validVer = True
+    #    elif version[0] == '.' or version[len(version)-1] == '.':
+    #        validVer = False
+    #        print("The version you entered is invalid.(invalid format)\n")
+    #    elif len(version) <= 2:
+    #        print("The version you entered is invalid.(too short)\n")
+    #        validVer = False
+    #    elif not validVer:
+    #        continue
+    #    elif not hasDot:
+    #        print("The version you entered is invalid.(no dot)\n")
+    #        validVer = False            
+        validVer = re.match(r'^[0-9]+(?:\.[0-9]+){1,2}$', version)
+        if not validVer:
+            print("\nThe version you entered is invalid. A version must be in the form #.# or #.#.#\n") 
 
     attrs = []
 
