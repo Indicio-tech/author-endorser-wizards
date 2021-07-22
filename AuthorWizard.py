@@ -14,10 +14,13 @@ from indy import ledger, did, wallet, pool, anoncreds
 from indy.error import ErrorCode, IndyError, PoolLedgerConfigAlreadyExistsError
 import platform
 
+
+
 os.system("clear")
 if platform.system() == "Windows":
     os.add_dll_directory(os.getenv('LIBINDY_DIR'))
 
+role = "Author"
 walletHandle = 0
 
 def downloadGenesis(networkUrl):
@@ -80,7 +83,7 @@ async def openPool(network):
         print()
     return pool_handle
  
-async def listPools():
+async def listPools(role):
     print("\nConnect to a Network\n--------------------\n")
     try:
         poolList = await pool.list_pools()
@@ -89,7 +92,7 @@ async def listPools():
         print("Error creating list of networks")
         print("\n")
 
-    print("Author's Networks:")
+    print(role + "'s Networks:")
     for i in range(len(poolList)):
         print("   " + str(i + 1) + ":", *list(poolList[i].values()))
     print("   " + str(len(poolList)+1) + ": Add New Network")
@@ -220,7 +223,7 @@ async def authorWizard():
     print("\nAuthor Wizard\n-------------\n")
     print("To begin, you must select or add the network that you would like to use for issuing credentials. If you select \"Add New Network\" you will be given a choice of which network to add to your list  of choices, then that network will be used during the rest  of this session.")
     print()
-    poolList = await listPools()
+    poolList = await listPools(role)
     userPool = input("Select the network you want to use("+str(len(poolList)+1)+"): ")
     print("\n")
     if userPool == str(len(poolList) + 1) or userPool == '':
@@ -233,7 +236,7 @@ async def authorWizard():
   
    #print("Below is a list of wallets:")
     
-    authorDid, authorVerKey = await listDids()
+    authorDid, authorVerKey = await listDids(role)
    #listDids()
     #authorDid = input("Choose the index number of the did you want to use: ")
     #if authorDid == "last":
@@ -242,7 +245,7 @@ async def authorWizard():
    #didUse(authorDid)
     print("\n")
     
-    tAA = await transactionAuthorAgreement(poolHandle, authorDid)
+    tAA = await transactionAuthorAgreement(poolHandle, walletHandle, authorDid)
 
     print("\n")
     schemaID = ''
@@ -310,11 +313,12 @@ def listNetworks():
     
     return network
  
-async def createDid():
+async def createDid(role, walletHandle):
     valid = False
+    authorDid = ''
 
     
-    print("A 'seed' is required for you to be able to add your Author DID to any other wallet. This seed should be stored in a safe place.")
+    print("A 'seed' is required for you to be able to add your "+role+" DID to any other wallet. This seed should be stored in a safe place.")
     print()
     while not valid:
         seed = input("Please enter an alpha-numeric 32 character seed, or hit 'enter' to have one created for you: ")
@@ -322,7 +326,7 @@ async def createDid():
         print()
         if seed == '':
             seed = seed.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
-            print("Author Seed:", seed)
+            print(role+" Seed:", seed)
             valid = True
         elif len(seed) < 32:
             print("\nThe seed you entered is too short\n")
@@ -354,15 +358,16 @@ async def createDid():
         print("\n")
         print("Error creating DID")
         print("\n")
+        raise
     else:
-        print("Author DID:", authorDid[0])
-        print("Author VerKey:", authorDid[1])
+        print(role+" DID:", authorDid[0])
+        print(role+" VerKey:", authorDid[1])
         print()
-        input("After you have saved your Seed in a safe place and recorded your Author DID and Verkey for later use, please hit enter to continue.")
+        input("After you have saved your Seed in a safe place and recorded your "+role+" DID and Verkey for later use, please hit enter to continue.")
         print()
 
     
-    didMetadata = "Author DID created by wizard"
+    didMetadata = role + " DID created by wizard"
     print()
     try:
         await did.set_did_metadata(walletHandle, authorDid[0], didMetadata)
@@ -377,8 +382,8 @@ async def createDid():
 
     return authorDid
 
-async def listDids():
-    print("\nAuthors DIDs\n------------\n")
+async def listDids(role):
+    print("\n"+role+"'s DIDs\n------------\n")
     print("Adding issuer transactions to the ledger requires you to create and maintain an \"Author DID\".  Select your Author DID from the following list, or create a new one and save the seed in a safe place. ")
     print()
     try:
@@ -403,13 +408,13 @@ async def listDids():
 
     print("     " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
     print()
-    index = input("Select an Author DID (" + str(len(didList)+1) + "): ")
+    index = input("Select an "+role+" DID (" + str(len(didList)+1) + "): ")
     print()
     
     if index == '':
-        authorDid, authorVerKey = await createDid()
+        authorDid, authorVerKey = await createDid(role, walletHandle)
     elif index == str(len(didList)+1):
-        authorDid, authorVerKey = await createDid()
+        authorDid, authorVerKey = await createDid(role, walletHandle)
     else:
         index = int(index) - 1
         authorDid = didList[index]["did"]
@@ -679,7 +684,7 @@ async def createCredDef(authorDid, poolHandle):
 
 
 
-async def transactionAuthorAgreement(poolHandle, authorDid):
+async def transactionAuthorAgreement(poolHandle, walletHandle, authorDid):
     answered = False
     add_taa_resp_json = json.dumps({"response": "none"})
 
@@ -751,7 +756,7 @@ type 'm' to go to the main menu):""")
         elif authorAction == '0':
             poolHandle, tAA = await authorWizard()
         elif authorAction == '1':
-            authorDid, authorVerKey = await listDids()
+            authorDid, authorVerKey = await listDids(role)
             await createSchema(authorDid)
         
         elif authorAction == '2':
@@ -766,14 +771,14 @@ type 'm' to go to the main menu):""")
             elif authorDid == 'none' or authorVerKey == 'none':
                 print("the Author's DID has not been selected.  Please select a DID to use (option 9)")
             else:
-                tAA = await transactionAuthorAgreement(poolHandle, authorDid)
+                tAA = await transactionAuthorAgreement(poolHandle, walletHandle, authorDid)
                 await signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle)
         elif authorAction == '5':
             network = listNetworks()
             await createPool(network)
             print("Network '", network, "' added.")
         elif authorAction == '6':
-            poolList = await listPools()
+            poolList = await listPools(role)
             authorPool = input("Choose the index number of the network you wish to use: ")
             if authorPool == len(poolList) + 1:
                 network = listNetworks()
@@ -791,10 +796,10 @@ type 'm' to go to the main menu):""")
             
         elif authorAction == '9':
 
-            await createDid()
+            await createDid(role, walletHandle)
 
         elif authorAction == '10':
-            authorDid, authorVerKey = await listDids()
+            authorDid, authorVerKey = await listDids(role)
             #useDid(authorDid)
         else:
             displayMenu()

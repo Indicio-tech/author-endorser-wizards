@@ -1,4 +1,4 @@
-from AuthorWizard import signSendTxn
+from AuthorWizard import createDid, createPool, openPool, downloadGenesis, listDids, listPools, transactionAuthorAgreement, listNetworks
 import json
 import logging
 from posixpath import join
@@ -24,64 +24,8 @@ from indy.error import ErrorCode, IndyError
 
 walletHandle = 0
 
-async def createDid():
-    
-    seed = input("Input the seed for your did, if it is blank it will be generated for you: ")
-    if seed == '':
-        seed = seed.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
-    print("Seed:", seed)
-    print("Copy this seed and put in a secure place")
-    print()
-    seedJson = {
-        "seed": seed
-    }
-    
-    seedJson = json.dumps(seedJson)
-    endorserDid, endorserVerKey = await did.create_and_store_my_did(walletHandle, seedJson)
-    print("DID:", endorserDid, "\nVer Key:", endorserVerKey)
-    print()
+role = "Endorser"
 
-    metadataChoice = input("Would you like to add metadata for your did? (y/n): ")
-   
-    if metadataChoice == 'y':
-        didMetadata = input("Input metadata here: ")
-        try:
-            await did.set_did_metadata(walletHandle, endorserDid, didMetadata)
-        except IndyError:
-            print("\n")
-            print("Error setting metadata")
-            print("\n")
-            raise
-        except:
-            print("system error")
-            
-    return endorserDid
-
-async def listDids():
-    didListJson = await did.list_my_dids_with_meta(walletHandle)
-    
-    didList = json.loads(didListJson)
-
-    print(" " + "Index |", "         DID         ", " | Metadata")
-    print("-------+------------------------+----------")
-
-    for i in range(len(didList)):
-        if len(didList[i]["did"]) == 22:
-            print("     " + str(i + 1) + " |", didList[i]["did"], '|', didList[i]["metadata"])
-        else:
-            print("     " + str(i + 1) + " |", didList[i]["did"], " |", didList[i]["metadata"])
-
-
-    print("     " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
-    print()
-    index = int(input("Choose your did's index: "))
-    index = index - 1
-    if index == len(didList):
-        endorserDid = await createDid()
-    else:
-        endorserDid = didList[index]["did"]
-
-    return endorserDid
 
 async def signTxn(poolHandle, endorserDid, tAA):
     slash = '/'
@@ -93,7 +37,9 @@ async def signTxn(poolHandle, endorserDid, tAA):
     signedFilePath = os.getcwd() + slash + signedFileName
     input("""The author will have sent you a Transaction in a file.
 Copy that file to the 'author-endorser-wizards' directory then press enter.""")
-    
+
+    signedFileName)
+        
     authorTxnFile = open(filePath)
     authorTxnReqJson = authorTxnFile.read()
     authorTxnFile.close()
@@ -105,6 +51,9 @@ Copy that file to the 'author-endorser-wizards' directory then press enter.""")
     authorTxnReq = json.dumps(authorTxnReq)
 
     endorsedTxn = await ledger.multi_sign_request(walletHandle, endorserDid, authorTxnReq)
+
+    if os.path.exists(signedFileName):
+        os.remove(signedFileName)
     
     endorsedTxnFile = open(signedFilePath, 'w')
     endorsedTxnFile.write(endorsedTxn)
@@ -112,123 +61,8 @@ Copy that file to the 'author-endorser-wizards' directory then press enter.""")
     return endorsedTxn, signedFilePath
 
 
-def downloadGenesis(networkUrl):
-    try:
-        urllib.request.urlretrieve(networkUrl, "genesisFile")
-    except:
-        print("\n")
-        print("Error downloading genesis file")
-        print("\n")
-
-def listNetworks():
-    print(" 1: indicioTestnet")
-    print(" 2: indicioDemonet")
-    print(" 3: indicioMainnet")
- 
-    network = input("which network do you want to add? : ")
- 
-    if network == '1':
-        network = "indicioTestnet"
-    elif network == '2':
-        network = "indicioDemonet"
-    elif network == '3':
-        network = "indicioMainnet"
-    return network
-
-async def createPool(network):
-
-    if "indicioTestnet" == network:
-        network_genesis_url="https://raw.githubusercontent.com/Indicio-tech/indicio-network/main/genesis_files/pool_transactions_testnet_genesis"
-    elif "indicioDemonet" == network:
-        network_genesis_url="https://raw.githubusercontent.com/Indicio-tech/indicio-network/main/genesis_files/pool_transactions_demonet_genesis"
-    elif "indicioMainnet" == network:
-        network_genesis_url="https://raw.githubusercontent.com/Indicio-tech/indicio-network/main/genesis_files/pool_transactions_mainnet_genesis"
-    else: network = "Network name not found"
-
-    downloadGenesis(network_genesis_url)
 
 
-    config = {
-            "genesis_txn": "genesisFile"
-    }
-    configJson = json.dumps(config)
-
-    try:
-        await pool.create_pool_ledger_config(network, configJson)
-    except:
-        print("\n")
-        print("Error connecting to network")
-        print("\n")
-    
-    return network
-
-async def openPool(network):  
-    poolList = await pool.list_pools()
-    pool_handle = 0
-    if network == "Network name not found":
-        return "Network name not found"
-    elif network == str(len(poolList) + 1):
-        network = listNetworks()
-        network = await createPool(network)
-    for i in range(len(poolList)):
-        if network == str(i+1):
-            network = list(poolList[i].values())
-    network = str(network).replace('[\'', '')
-    network = network.replace('\']', '')
- 
-    try:
-        pool_handle = await pool.open_pool_ledger(config_name=network, config=None)
-    except:
-        print("\n")
-        print("Error connecting to network '" + network +"'")
-        print("\n")
-    return pool_handle
- 
-async def listPools():
-    poolList = ''
-    try:
-        poolList = await pool.list_pools()
-    except:
-        print("\n")
-        print("Error creating list of networks")
-        print("\n")
-
-    print("Endorser's Networks:")
-    for i in range(len(poolList)):
-        print("   " + str(i + 1) + ":", *list(poolList[i].values()))
-    print("   " + str(len(poolList)+1) + ": Add a Network")
-
-    return poolList
-
-async def transactionAuthorAgreement(poolHandle, endorserDid):
-    answered = False
-    add_taa_resp_json = json.dumps({"response": "none"})
-    
-    print("Please agree to the Transaction Author Agreement(TAA) before continuing.")
-    print()
-    print("The TAA can be read at https://github.com/Indicio-tech/indicio-network/blob/main/TAA/TAA.md if connecting to an Indicio network, which includes agreeing to not place any Personaly Identifiable Information(PII) or any illeagal material on the ledger.")
-    add_taa_resp = ''
-    while not answered:
-        agreeTAA = input("Do you accept the TAA(Y/N)?")
-        if agreeTAA == 'y' or agreeTAA == 'Y':
-            add_taa_req = await ledger.build_get_txn_author_agreement_request(endorserDid, None)
-            
-            print()
-            add_taa_resp = await ledger.sign_and_submit_request(poolHandle, walletHandle, endorserDid, add_taa_req)
-            answered = True
-            print("Great! You are all ready to go.")
-        elif agreeTAA == 'n' or agreeTAA == 'N':
-            print("we are sorry, you are not able to write schemas or cred defs to the ledger.")
-            print()
-            print("Press enter to view the menu")
-            input()
-            answered = True
-        else:
-            continue
-    
-    add_taa_resp_json = json.loads(add_taa_resp)
-
-    return add_taa_resp_json
 
 async def createWallet():
     walletName = "endorser_wizard_wallet" # input("What would you like to name your wallet?: ")
@@ -286,7 +120,7 @@ async def openWallet():
     walletList = listWallets()
     print(' ' + str(len(walletList) + 1) + ": Create New Wallet")
  
-    walletIndex = int(input("Choose the index number of the wallet you want to open: "))
+    walletIndex = int(input("Please choose the number associated with the wallet that contains your Endorser DID on the network the author wants to write a transaction to:\n"))
     userDir = os.path.expanduser("~")
     dirExists = True
     try:
@@ -410,12 +244,23 @@ def displayMenu():
     print("  q: Quit")
 
 async def endorserWizard():
-    print("Hello, welcome to the Endorser Signing Wizard!")
-    await listPools()
-    network = input("Choose the pool you want to open: ")
-    poolHandle = await openPool(network)
-    endorserDid = await createDid()
-    tAA = await transactionAuthorAgreement(poolHandle, endorserDid)
+    poolHandle = None
+    network = ''
+    print("\nEndorser Wizard\n-------------\n")
+    print("To begin, you must select or add the network that the issuer would like to use for issuing credentials. If you select \"Add New Network\" you will be given a choice of which network to add to your list  of choices, then that network will be used during the rest  of this session.")
+    print()
+    poolList = await listPools(role)
+    userPool = input("Select the network you want to use("+str(len(poolList)+1)+"): ")
+    print("\n")
+    if userPool == str(len(poolList) + 1) or userPool == '':
+       network = listNetworks()
+       
+       network = await createPool(network)
+       poolHandle = await openPool(network)
+    else:
+       poolHandle = await openPool(userPool)
+    endorserDid, endorserVerKey = await createDid(role, walletHandle)
+    tAA = await transactionAuthorAgreement(poolHandle, walletHandle, endorserDid)
     input("Press enter to continue when the Author has completed his side.")
 
     endorsedTxn, endorsedTxnFile = await signTxn(poolHandle, endorserDid, tAA)
@@ -424,9 +269,18 @@ async def endorserWizard():
     return network, poolHandle, endorserDid, tAA
 
 async def main():
-    await openWallet()
+    
     endorsedTxn = ''
-    signWizard = input("If you would like to skip the signing wizard enter 'y', otherwise hit enter: ")
+    signWizard = input("""Welcome to the Transaction Endorser Wizard!\n\n
+If you are running this, it means that you would like to endorse Hyperledger Indy based credentials for
+an Author on the network that they want to issue from. This script will help you sign the transactions
+your Author needs so you can then send them back to the Author who will send them to the network. The
+"wizard" will guide you through each step of the process, but you can perform individual tasks by
+referring to the main menu. (Hit 'enter' now to use the wizard, or type 'm' to go to the main menu): """)
+    print("...")
+    os.system("clear")
+    print("Please choose the wallet that contains your Endorser DID on the network the author wants to write a transaction to\n")
+    await openWallet()
     if signWizard == 'y':
         network = ''
         poolHandle = 0
@@ -477,7 +331,7 @@ async def main():
             await openWallet()
             
         elif endorserAction == '6':
-            endorserDid = await listDids()
+            endorserDid = await listDids(role)
             #useDid(authorDid)
         elif endorserAction == '7':
             if poolHandle == 0:
@@ -502,7 +356,7 @@ async def main():
             elif endorserDid == '':
                 print("Please specify your endorser DID (option 6)")
             else:
-                tAA = await transactionAuthorAgreement(poolHandle, endorserDid)
+                tAA = await transactionAuthorAgreement(poolHandle, walletHandle, endorserDid)
         else:
             displayMenu()
     if poolHandle:
