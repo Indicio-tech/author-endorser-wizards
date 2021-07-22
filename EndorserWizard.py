@@ -38,7 +38,6 @@ async def signTxn(poolHandle, endorserDid, tAA):
     input("""The author will have sent you a Transaction in a file.
 Copy that file to the 'author-endorser-wizards' directory then press enter.""")
 
-    signedFileName)
         
     authorTxnFile = open(filePath)
     authorTxnReqJson = authorTxnFile.read()
@@ -120,7 +119,7 @@ async def openWallet():
     walletList = listWallets()
     print(' ' + str(len(walletList) + 1) + ": Create New Wallet")
  
-    walletIndex = int(input("Please choose the number associated with the wallet that contains your Endorser DID on the network the author wants to write a transaction to:\n"))
+    walletIndex = int(input("Please choose the number associated with the wallet that contains your Endorser DID on the network the author wants to write a transaction to: "))
     userDir = os.path.expanduser("~")
     dirExists = True
     try:
@@ -259,7 +258,7 @@ async def endorserWizard():
        poolHandle = await openPool(network)
     else:
        poolHandle = await openPool(userPool)
-    endorserDid, endorserVerKey = await createDid(role, walletHandle)
+    endorserDid, endorserVerKey = await listDids(role, walletHandle)
     tAA = await transactionAuthorAgreement(poolHandle, walletHandle, endorserDid)
     input("Press enter to continue when the Author has completed his side.")
 
@@ -331,7 +330,7 @@ referring to the main menu. (Hit 'enter' now to use the wizard, or type 'm' to g
             await openWallet()
             
         elif endorserAction == '6':
-            endorserDid = await listDids(role)
+            endorserDid = await listDids(role, walletHandle)
             #useDid(authorDid)
         elif endorserAction == '7':
             if poolHandle == 0:

@@ -132,6 +132,7 @@ async def createWallet():
     return walletName
 
 def listWallets():
+    print("\nWallet Selection\n----------------\n")
     userDir = os.path.expanduser("~")
     dirExists = True
     filePath = "/.indy_client/wallet/"
@@ -151,6 +152,7 @@ def listWallets():
         print("Your Wallets:")
         for i in range(len(walletList)):
             print(' ' + str(i+1) + ":", walletList[i])
+        print()
    #list wallet code
     return walletList
  
@@ -221,7 +223,7 @@ async def openWallet():
 async def authorWizard():
     poolHandle = None
     print("\nAuthor Wizard\n-------------\n")
-    print("To begin, you must select or add the network that you would like to use for issuing credentials. If you select \"Add New Network\" you will be given a choice of which network to add to your list  of choices, then that network will be used during the rest  of this session.")
+    print("To begin, you must select or add the network that you would like to use for issuing credentials. If you select \"Add New Network\" you will be given a choice of which network to add to your list of choices, then that network will be used during the rest of this session.")
     print()
     poolList = await listPools(role)
     userPool = input("Select the network you want to use("+str(len(poolList)+1)+"): ")
@@ -236,7 +238,7 @@ async def authorWizard():
   
    #print("Below is a list of wallets:")
     
-    authorDid, authorVerKey = await listDids(role)
+    authorDid, authorVerKey = await listDids(role, walletHandle)
    #listDids()
     #authorDid = input("Choose the index number of the did you want to use: ")
     #if authorDid == "last":
@@ -382,7 +384,8 @@ async def createDid(role, walletHandle):
 
     return authorDid
 
-async def listDids(role):
+async def listDids(role, walletHandle):
+    didListJson = ''
     print("\n"+role+"'s DIDs\n------------\n")
     print("Adding issuer transactions to the ledger requires you to create and maintain an \"Author DID\".  Select your Author DID from the following list, or create a new one and save the seed in a safe place. ")
     print()
@@ -400,13 +403,20 @@ async def listDids(role):
     print("-------+------------------------+----------")
 
     for i in range(len(didList)):
-        if len(didList[i]["did"]) == 22:
+        if len(didList[i]["did"]) == 22 and i < 9:
             print("     " + str(i + 1) + " |", didList[i]["did"], '|', didList[i]["metadata"])
+        elif len(didList[i]["did"]) == 22 and i >= 9:
+            print("    " + str(i + 1) + " |", didList[i]["did"], '|', didList[i]["metadata"])
+        elif len(didList[i]["did"]) == 21 and i < 9:
+            print("     " + str(i + 1) + " |", didList[i]["did"], ' |', didList[i]["metadata"])
         else:
-            print("     " + str(i + 1) + " |", didList[i]["did"], " |", didList[i]["metadata"])
+            print("    " + str(i + 1) + " |", didList[i]["did"], " |", didList[i]["metadata"])
 
 
-    print("     " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
+    if len(didList) > 9:
+        print("    " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
+    else:
+        print("     " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
     print()
     index = input("Select an "+role+" DID (" + str(len(didList)+1) + "): ")
     print()
@@ -799,7 +809,7 @@ type 'm' to go to the main menu):""")
             await createDid(role, walletHandle)
 
         elif authorAction == '10':
-            authorDid, authorVerKey = await listDids(role)
+            authorDid, authorVerKey = await listDids(role, walletHandle)
             #useDid(authorDid)
         else:
             displayMenu()
