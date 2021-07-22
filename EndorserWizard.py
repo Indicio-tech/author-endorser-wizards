@@ -28,7 +28,7 @@ role = "Endorser"
 
 
 async def signTxn(poolHandle, endorserDid, tAA):
-    print("\nTransaction Signing\n-------------------\n"
+    print("\nTransaction Signing\n-------------------\n")
     slash = '/'
     if platform.system() == "windows":
         slash ='\\'
@@ -37,10 +37,24 @@ async def signTxn(poolHandle, endorserDid, tAA):
     signedFileName = "authors-signed-txn"
     signedFilePath = os.getcwd() + slash + signedFileName
     input("""The author will have sent you a Transaction in a file. Copy that
-file to the 'author-endorser-wizards' directory then press enter.""")
+file to the '""" + os.getcwd() + """' directory then press enter.""")
 
-        
-    authorTxnFile = open(filePath)
+    if os.path.exists(signedFileName):
+        input("\nA file named '"+signedFileName+"""' already exists and will be deleted.
+Press Enter to continue""")
+        os.remove(signedFileName)
+    
+    error = True
+    while error:
+        try:
+            authorTxnFile = open(signedFileName)
+            error = False
+        except FileNotFoundError:
+            print("\nThe file does not exist, Please ensure that the author sent you the correct file and it is in the correct directory.\n")
+            print("File path:", os.getcwd() + slash)
+            print("File name:", fileName, '\n')
+            input("Press enter when completed")
+            error = True
     authorTxnReqJson = authorTxnFile.read()
     authorTxnFile.close()
     await writeAuthorToLedger(poolHandle, authorTxnReqJson, endorserDid, tAA)
@@ -52,8 +66,6 @@ file to the 'author-endorser-wizards' directory then press enter.""")
 
     endorsedTxn = await ledger.multi_sign_request(walletHandle, endorserDid, authorTxnReq)
 
-    if os.path.exists(signedFileName):
-        os.remove(signedFileName)
     
     endorsedTxnFile = open(signedFilePath, 'w')
     endorsedTxnFile.write(endorsedTxn)
@@ -185,7 +197,10 @@ def becomeEndorser():
 
 async def writeAuthorToLedger(poolHandle, authorTxnJson, endorserDid, tAA):
     authorTxn = json.loads(authorTxnJson)
-    authorDid = authorTxn["author_did"]
+    try:
+        authorDid = authorTxn["author_did"]
+    except KeyError:
+        print("\nThe given txn did not contain the authors DID\n")
     authorVerKey = authorTxn["author_ver_key"]
     tAA = tAA["result"]
     reqJson = ''
@@ -265,6 +280,9 @@ async def endorserWizard():
     else:
        poolHandle = await openPool(userPool)
     endorserDid, endorserVerKey = await listDids(role, walletHandle)
+
+    print("\nFor the transaction to be sent to the ledger, the Authors DID must be on the ledger. To add their did to the ledger, you must agree to the TAA.\n")
+    
     tAA = await transactionAuthorAgreement(poolHandle, walletHandle, endorserDid)
     input("\n\nPress enter to continue when the Author has completed building his transaction.")
     print()
