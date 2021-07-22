@@ -12,8 +12,8 @@ ADD . .
 
 ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
 RUN chmod +x ./jq
-COPY AuthorWizard.py AuthorWizard.py
-RUN chmod +x ./AuthorWizard.py
+#COPY AuthorWizard.py AuthorWizard.py
+#RUN chmod +x ./AuthorWizard.py
 
 # python configurations added by Gavin Bendixsen
 
@@ -27,6 +27,7 @@ RUN apt-get install -y libindy
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install aiohttp base58 indy Python3-indy asyncio
 
-USER $user
+WORKDIR /root/author-endorser-wizards
+
 
 CMD python3 ./AuthorWizard.py
