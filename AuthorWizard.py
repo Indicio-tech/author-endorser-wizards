@@ -576,26 +576,27 @@ async def createSchema(authorDid):
     print("Enter the schema's attributes names one at a time ('done' to stop, 'restart' to start over).\n")
     while add:
         attrs.append(input("Attribute: "))
-        valid = True
-        for j in range(len(attrs[i])):
-            if attrs[i][j].isupper():
-                print("The attribute entered is invalid and will be removed(uppercase)")
-                valid = False
-                break
-            elif attrs[i][j].isspace():
-                print("The attribute entered is invalid and will be removed(space)")
-                valid = False
-                break
-            elif not attrs[i][j].isalnum():
-                if attrs[i][j] == '_':
-                    valid = True
-                else:
-                    print("The attribute entered is invalid and will be removed(special character)")
-                    valid = False
-                    break
-            else:
-                valid = True
-        if not valid:
+        #valid = True
+        #for j in range(len(attrs[i])):
+        #    if attrs[i][j].isupper():
+        #        print("The attribute entered is invalid and will be removed(uppercase)")
+        #        valid = False
+        #        break
+        #    elif attrs[i][j].isspace():
+        #        print("The attribute entered is invalid and will be removed(space)")
+        #        valid = False
+        #        break
+        #    elif not attrs[i][j].isalnum():
+        #        if attrs[i][j] == '_':
+        #            valid = True
+        #        else:
+        #            print("The attribute entered is invalid and will be removed(special character)")
+        #            valid = False
+        #            break
+        #    else:
+        #        valid = True
+        if not re.match(r'^[a-z]*(?:\_[a-z]*)*$', attrs[i]):
+            print("The attribute entered is invalid and will be removed")
             attrs.remove(attrs[i])
             i -= 1
         elif attrs[i] == '':
