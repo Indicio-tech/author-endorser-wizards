@@ -47,7 +47,7 @@ Press Enter to continue""")
     error = True
     while error:
         try:
-            authorTxnFile = open(signedFileName)
+            authorTxnFile = open(fileName)
             error = False
         except FileNotFoundError:
             print("\nThe file does not exist, Please ensure that the author sent you the correct file and it is in the correct directory.\n")
