@@ -388,7 +388,7 @@ async def createDid(role, walletHandle):
 async def listDids(role, walletHandle):
     didListJson = ''
     print("\n"+role+"'s DIDs\n------------\n")
-    print("Adding issuer transactions to the ledger requires you to create and maintain an \"Author DID\".  Select your Author DID from the following list, or create a new one and save the seed in a safe place. ")
+    print("Adding issuer transactions to the ledger requires you to create and maintain an \""+role+" DID\".  Select your "+role+" DID from the following list, or create a new one and save the seed in a safe place. ")
     print()
     try:
         didListJson = await did.list_my_dids_with_meta(walletHandle)
