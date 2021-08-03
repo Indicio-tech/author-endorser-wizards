@@ -258,7 +258,7 @@ async def authorWizard():
  1. Create a new schema 
  2. Use an existing one
 
- (1/2):""")
+Select an option(1/2): """)
     while True:
         if schemaChoice == '1':
             print('\n')
@@ -274,7 +274,7 @@ async def authorWizard():
  1. Create a new schema 
  2. Use an existing one
 
- (1/2):""")
+Select an option(1/2): """)
 
     credDefTxn = await createCredDef(authorDid, poolHandle)
 
@@ -453,7 +453,7 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
         print("Error appending the TAA")
         print("\n")
         
-    endorserDid = input("An Endorser must now sign your schema transaction before you can write it to the network.  Please enter the Endorser DID of your chosen Endorser: ")
+    endorserDid = input("An Endorser must now sign your transaction before you can write it to the network.  Please enter the Endorser DID of your chosen Endorser: ")
     try:
         authorsTxn = await ledger.append_request_endorser(authorsTxn, endorserDid)
     except:
@@ -474,11 +474,11 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
     }
     authorsTxnWithDid = json.dumps(authorsTxnWithDid)
     
-    print("We have completed the first phase of preparing your Schema transaction!\n  The transaction will be in a file named '" + os.getcwd() + slash + fileName + "'.\n  ")
+    print("We have completed the first phase of preparing your transaction!\n  The transaction will be in a file named '" + os.getcwd() + slash + fileName + "'.\n  ")
     print()
     if os.path.exists(fileName):
         input("A file named '"+fileName+"""' already exists and will be deleted.
-Press Enter to continue""")
+Press Enter to continue\n""")
         os.remove(fileName)
     if os.path.exists(signedFileName):
         os.remove(signedFileName)
@@ -490,11 +490,11 @@ Press Enter to continue""")
         print("Replacing the previous version of " + fileName + "...")
         txnFile = open(filePath, "w")
     else: 
-        print("Writing", fileName + "...")
+        print("\nWriting", fileName + "...")
 
     txnFile.write(authorsTxnWithDid)
     txnFile.close()
-    print("...done")
+    print("...done\n")
     print()
     input("Please send this file to your endorser so that they can sign and return it to you.")
 
@@ -518,28 +518,30 @@ Copy that file to the '""" + os.getcwd() + slash + """' directory then press ent
     try:
         await ledger.submit_request(poolHandle, authorsSignedTxn)
     except IndyError as CommonInvalidStructure:
-        print("ERROR: Could not write txn to ledger", CommonInvalidStructure)
+        print("ERROR: Could not write txn to network", CommonInvalidStructure)
         print()
         error = True
     except ErrorCode.LedgerInvalidTransaction:
-        print("ERROR: Could not write txn to ledger")
+        print("ERROR: Could not write txn to network")
         print()
         error = True
     if not error:
         print("\n")
-        print("Successfully written to the ledger.")
+        print("Successfully written to the network.")
     return
 
 async def createSchema(authorDid):
     print("Schema Creation\n---------------\n")
     validVer = False
     hasDot = False
+
+    print("Schema creation requires you to select a name, a version number, and the attributes you would like to have for the schema. The 'Schema Name' is your choice but should be descriptive enough for you to remember its purpose.\n")
     
-    name = input("Enter name of schema: ")
+    name = input("Enter Schema Name: ")
     print("\nA schema version must contain either 1 or 2 '.'s, and must have at least one number before and after each '.'\nExamples: 1.0, 35.2.1, 0.12345")
     print()
     while not validVer:
-        version = str(input("Enter version (1.0): "))
+        version = str(input("Enter Schema Version (1.0): "))
     #    for i in range(len(version)-2):
      #       if version[i+1] == '.':
     #            hasDot = True
@@ -550,8 +552,8 @@ async def createSchema(authorDid):
     #            print("The version you entered is invalid.(not numeric)\n")
     #            break
 #
-    #    if version == '':
-    #        version = '1.0'
+        if version == '':
+            version = '1.0'
     #        validVer = True
     #    elif version[0] == '.' or version[len(version)-1] == '.':
     #        validVer = False
@@ -575,7 +577,7 @@ async def createSchema(authorDid):
     print("\nSchema attributes must be numbers or lowercase letters without spaces or special characters. (underscores are ok)")
     print("Enter the schema's attributes names one at a time ('done' to stop, 'restart' to start over).\n")
     while add:
-        attrs.append(input("Attribute: "))
+        attrs.append(input("Attribute "+ str(i+1) +": "))
         #valid = True
         #for j in range(len(attrs[i])):
         #    if attrs[i][j].isupper():
@@ -606,6 +608,7 @@ async def createSchema(authorDid):
             attrs.remove("done")
             add = False
         elif attrs[i] == "restart":
+            print("\nRemoved all previously entered attributes. Please start again at attribute 1.\n")
             attrs.clear()
             i -= i + 1
         i += 1
@@ -635,6 +638,9 @@ async def createSchema(authorDid):
         return "error"
 
 async def createCredDef(authorDid, poolHandle):
+    print("\nCred Def Creation\n-----------------\n")
+    print("Credential Definitions, or Cred Defs, only require an existing Schema ID to be created, and allow you to issue credentials containing the specified Schema's attributes")
+    print()
     invalidSchema = True
     credDefTxn = '{"none":"0"}'
     while invalidSchema:
@@ -675,7 +681,7 @@ async def createCredDef(authorDid, poolHandle):
             invalidSchema = False
         except KeyError:
             print("Something went wrong when getting the schema")
-            print("Most likely the schema is not on the ledger, Please try again with a valid schema ID")
+            print("Most likely the schema is not on the network, Please try again with a valid schema ID")
             invalidSchema = True
             continue
         
