@@ -135,7 +135,7 @@ async def openWallet():
     walletList = listWallets()
     print(' ' + str(len(walletList) + 1) + ": Create New Wallet")
  
-    walletIndex = input("Please select a wallet or hit enter to create a new one("+str(len(walletList))+"): ")
+    walletIndex = input("Please select a wallet or hit enter to create a new one("+str(len(walletList)+1)+"): ")
     if walletIndex.isnumeric():
         walletIndex = int(walletIndex)
     else:
@@ -162,7 +162,7 @@ async def openWallet():
                     
             if walletExists:
                 walletName = "endorser_wizard_wallet"
-                print("\nThe wallet '"+walletList[walletIndex]+"' already exists. Opening...")
+                print("\nThe wallet '"+walletList[walletIndex]+"' already exists, and will be used.")
             else:
                 walletName = await createWallet()
         else:
