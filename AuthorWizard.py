@@ -281,7 +281,11 @@ Select an option(1/2): """)
     await signSendTxn(authorDid, authorVerKey, credDefTxn, tAA, poolHandle)
 
     print()
-    return poolHandle, tAA
+
+    choice = input("The Transaction Author Wizard has finished.  Press 'q' to quit, or press enter to go to the main menu: ")
+    if choice == 'q' or choice == 'Q':
+        author = 0 
+    return poolHandle, tAA, author
 
 def displayMenu():
     print("Menu\n----\n")
@@ -474,7 +478,7 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
     }
     authorsTxnWithDid = json.dumps(authorsTxnWithDid)
     
-    print("We have completed the first phase of preparing your transaction!\n  The transaction will be in a file named '" + os.getcwd() + slash + fileName + "'.\n  ")
+    print("We have completed the first phase of preparing your transaction!\n  The transaction will be in a file named '" + fileName + "' in the same directory that you started this program from.\n  ")
     print()
     if os.path.exists(fileName):
         input("A file named '"+fileName+"""' already exists and will be deleted.
@@ -496,18 +500,17 @@ Press Enter to continue\n""")
     txnFile.close()
     print("...done\n")
     print()
-    input("Please send this file to your endorser so that they can sign and return it to you.")
+    input("Please send this file to your endorser so that they can sign and return it to you, then press enter to continue.")
 
     input("""The Endorser will have sent a file named '"""+signedFileName+"""'.
-Copy that file to the '""" + os.getcwd() + slash + """' directory then press enter.""")
+Copy that file to the directory that you started the program from then press enter.""")
     error = True
     while error:
         try:
             authorsSignedTxnFile = open(signedFileName)
             error = False
         except FileNotFoundError:
-            print("The file does not exist, Please ensure that the endorser sent you the correct file and it is in the correct directory.\n")
-            print("File path:", os.getcwd() + slash)
+            print("The file does not exist, Please ensure that the endorser sent you the correct file and it is in the directory you ran the program from.\n")
             print("File name:", signedFileName, '\n')
             input("Press enter when completed")
             error = True
@@ -638,13 +641,13 @@ async def createSchema(authorDid):
         return "error"
 
 async def createCredDef(authorDid, poolHandle):
-    print("\nCred Def Creation\n-----------------\n")
+    print("\nCredential Definition Creation\n------------------------------\n")
     print("Credential Definitions, or Cred Defs, only require an existing Schema ID to be created, and allow you to issue credentials containing the specified Schema's attributes")
     print()
     invalidSchema = True
     credDefTxn = '{"none":"0"}'
     while invalidSchema:
-        schemaID = input("Input the schema ID to use for this cred def: ")
+        schemaID = input("Input the Schema ID to use for this Cred Def: ")
         getSchemaRequest = ''
         try:
             getSchemaRequest = await ledger.build_get_schema_request(authorDid, schemaID)
@@ -742,6 +745,7 @@ async def transactionAuthorAgreement(poolHandle, walletHandle, authorDid):
 
 async def main():
     network = 0
+    author = 1
     authorDid = 'none'
     authorVerKey = 'none'
     authorsTxn = 'none'
@@ -758,14 +762,14 @@ you can perform individual tasks by referring to the main menu. (Hit 'enter' now
 type 'm' to go to the main menu):""")
     os.system("clear")
     if setup != 'm':
-        poolHandle, tAA = await authorWizard()
+        poolHandle, tAA, author = await authorWizard(author)
   
  
    # Display menu for the different options for
    # author endorser communication
  
     displayMenu()
-    author = 1
+    
  
    # loop to allow user to choose many different options from the menu
  
