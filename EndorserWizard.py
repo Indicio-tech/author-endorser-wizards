@@ -36,7 +36,7 @@ async def signTxn(poolHandle, endorserDid, tAA):
     filePath = os.getcwd() + slash + fileName
     signedFileName = "authors-signed-txn"
     signedFilePath = os.getcwd() + slash + signedFileName
-    input("""The author will have sent you a Transaction in a file. Copy that file to the '""" + os.getcwd() + """' directory then press enter.""")
+    input("""The author will have sent you a Transaction in a file. Copy that file to the directory you ran the program from, then press enter.""")
 
     if os.path.exists(signedFileName):
         input("\nA file named '"+signedFileName+"""' already exists and will be deleted.
@@ -49,18 +49,26 @@ Press Enter to continue""")
             authorTxnFile = open(fileName)
             error = False
         except FileNotFoundError:
-            print("\nThe file does not exist, Please ensure that the author sent you the correct file and it is in the correct directory.\n")
-            print("File path:", os.getcwd() + slash)
+            print("\nThe file does not exist, Please ensure that the author sent you the correct file and it is in the directory you ran the program from.\n")
             print("File name:", fileName, '\n')
             input("Press enter when completed")
             error = True
-    authorTxnReqJson = authorTxnFile.read()
-    authorTxnFile.close()
-    await writeAuthorToLedger(poolHandle, authorTxnReqJson, endorserDid, tAA)
-    
-    authorTxnReq = json.loads(authorTxnReqJson)
-    authorTxnReq = authorTxnReq["txn"]
+            continue
+        authorTxnReqJson = authorTxnFile.read()
+        authorTxnFile.close()
 
+    
+        await writeAuthorToLedger(poolHandle, authorTxnReqJson, endorserDid, tAA)
+
+    
+        authorTxnReq = json.loads(authorTxnReqJson)
+        authorTxnReq = authorTxnReq["txn"]
+        if authorTxnReq["endorser"] != endorserDid:
+            input("The file sent does not conatain the correct Endorser DID.  Please contact the Author and Request them to input the correct DID in their transaction, then replace the currant Transaction file and press enter.")
+            error = True
+            continue
+        else:
+            error = False
     authorTxnReq = json.dumps(authorTxnReq)
 
     endorsedTxn = await ledger.multi_sign_request(walletHandle, endorserDid, authorTxnReq)
@@ -174,8 +182,10 @@ async def openWallet():
     
     
     #walletList[int(walletIndex)-1]
-
-    walletKey = input("Enter your Wallet Key: ")
+    if walletName == "endorser_wizard_wallet":
+        walletKey = walletName
+    else:
+        walletKey = input("Enter your Wallet Key: ")
     
     walletNameConfig = {
         "id": walletName
@@ -273,7 +283,7 @@ def displayMenu():
     print("  9: Display Menu")
     print("  q: Quit")
 
-async def endorserWizard():
+async def endorserWizard(endorser):
     poolHandle = None
     network = ''
     endorsing = True
@@ -309,10 +319,14 @@ async def endorserWizard():
     print("\n")
     print("Thank you for using the Endorser Wizard.\n\n\n")
 
-    return network, poolHandle, endorserDid, tAA
+    choice = input("The Transaction Author Wizard has finished.  Press 'q' to quit, or press enter to go to the main menu: ")
+    if choice == 'q' or choice == 'Q':
+        endorser = 0
+
+    return network, poolHandle, endorserDid, tAA, endorser
 
 async def main():
-    
+    endorser = 1
     endorsedTxn = ''
     signWizard = input("""Welcome to the Transaction Endorser Wizard!\n\n
 If you are running this, it means that you would like to endorse Hyperledger Indy based credentials for
@@ -330,12 +344,13 @@ referring to the main menu. (Hit 'enter' now to use the wizard, or type 'm' to g
         endorserDid = ''
         tAA = ''
     else:
-        network, poolHandle, endorserDid, tAA = await endorserWizard()
+        network, poolHandle, endorserDid, tAA, endorser = await endorserWizard(endorser)
    # Display menu for the different options for
    # author endorser communication
- 
-    displayMenu()
-    endorser = 1
+   # do not display if wizard completed and choice is 'q'(quit)
+    if endorser:
+        displayMenu()
+    
  
    # loop to allow user to choose many different options from the menu
  
