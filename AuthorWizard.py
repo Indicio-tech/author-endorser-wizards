@@ -13,6 +13,7 @@ from ctypes import cdll
 from indy import ledger, did, wallet, pool, anoncreds
 from indy.error import ErrorCode, IndyError, PoolLedgerConfigAlreadyExistsError
 import platform
+import re
 
 
 
@@ -132,6 +133,7 @@ async def createWallet():
     return walletName
 
 def listWallets():
+    print("\nWallet Selection\n----------------\n")
     userDir = os.path.expanduser("~")
     dirExists = True
     filePath = "/.indy_client/wallet/"
@@ -151,6 +153,7 @@ def listWallets():
         print("Your Wallets:")
         for i in range(len(walletList)):
             print(' ' + str(i+1) + ":", walletList[i])
+        print()
    #list wallet code
     return walletList
  
@@ -221,7 +224,7 @@ async def openWallet():
 async def authorWizard():
     poolHandle = None
     print("\nAuthor Wizard\n-------------\n")
-    print("To begin, you must select or add the network that you would like to use for issuing credentials. If you select \"Add New Network\" you will be given a choice of which network to add to your list  of choices, then that network will be used during the rest  of this session.")
+    print("To begin, you must select or add the network that you would like to use for issuing credentials. If you select \"Add New Network\" you will be given a choice of which network to add to your list of choices, then that network will be used during the rest of this session.")
     print()
     poolList = await listPools(role)
     userPool = input("Select the network you want to use("+str(len(poolList)+1)+"): ")
@@ -236,7 +239,7 @@ async def authorWizard():
   
    #print("Below is a list of wallets:")
     
-    authorDid, authorVerKey = await listDids(role)
+    authorDid, authorVerKey = await listDids(role, walletHandle)
    #listDids()
     #authorDid = input("Choose the index number of the did you want to use: ")
     #if authorDid == "last":
@@ -255,7 +258,7 @@ async def authorWizard():
  1. Create a new schema 
  2. Use an existing one
 
- (1/2):""")
+Select an option(1/2): """)
     while True:
         if schemaChoice == '1':
             print('\n')
@@ -271,14 +274,18 @@ async def authorWizard():
  1. Create a new schema 
  2. Use an existing one
 
- (1/2):""")
+Select an option(1/2): """)
 
     credDefTxn = await createCredDef(authorDid, poolHandle)
 
     await signSendTxn(authorDid, authorVerKey, credDefTxn, tAA, poolHandle)
 
     print()
-    return poolHandle, tAA
+
+    choice = input("The Transaction Author Wizard has finished.  Press 'q' to quit, or press enter to go to the main menu: ")
+    if choice == 'q' or choice == 'Q':
+        author = 0 
+    return poolHandle, tAA, author
 
 def displayMenu():
     print("Menu\n----\n")
@@ -382,9 +389,10 @@ async def createDid(role, walletHandle):
 
     return authorDid
 
-async def listDids(role):
+async def listDids(role, walletHandle):
+    didListJson = ''
     print("\n"+role+"'s DIDs\n------------\n")
-    print("Adding issuer transactions to the ledger requires you to create and maintain an \"Author DID\".  Select your Author DID from the following list, or create a new one and save the seed in a safe place. ")
+    print("Adding issuer transactions to the ledger requires you to create and maintain an \""+role+" DID\".  Select your "+role+" DID from the following list, or create a new one and save the seed in a safe place. ")
     print()
     try:
         didListJson = await did.list_my_dids_with_meta(walletHandle)
@@ -400,13 +408,20 @@ async def listDids(role):
     print("-------+------------------------+----------")
 
     for i in range(len(didList)):
-        if len(didList[i]["did"]) == 22:
+        if len(didList[i]["did"]) == 22 and i < 9:
             print("     " + str(i + 1) + " |", didList[i]["did"], '|', didList[i]["metadata"])
+        elif len(didList[i]["did"]) == 22 and i >= 9:
+            print("    " + str(i + 1) + " |", didList[i]["did"], '|', didList[i]["metadata"])
+        elif len(didList[i]["did"]) == 21 and i < 9:
+            print("     " + str(i + 1) + " |", didList[i]["did"], ' |', didList[i]["metadata"])
         else:
-            print("     " + str(i + 1) + " |", didList[i]["did"], " |", didList[i]["metadata"])
+            print("    " + str(i + 1) + " |", didList[i]["did"], " |", didList[i]["metadata"])
 
 
-    print("     " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
+    if len(didList) > 9:
+        print("    " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
+    else:
+        print("     " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
     print()
     index = input("Select an "+role+" DID (" + str(len(didList)+1) + "): ")
     print()
@@ -442,7 +457,7 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
         print("Error appending the TAA")
         print("\n")
         
-    endorserDid = input("An Endorser must now sign your schema transaction before you can write it to the network.  Please enter the Endorser DID of your chosen Endorser: ")
+    endorserDid = input("An Endorser must now sign your transaction before you can write it to the network.  Please enter the Endorser DID of your chosen Endorser: ")
     try:
         authorsTxn = await ledger.append_request_endorser(authorsTxn, endorserDid)
     except:
@@ -463,11 +478,11 @@ async def signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle):
     }
     authorsTxnWithDid = json.dumps(authorsTxnWithDid)
     
-    print("We have completed the first phase of preparing your Schema transaction!\n  The transaction will be in a file named '" + os.getcwd() + slash + fileName + "'.\n  ")
+    print("We have completed the first phase of preparing your transaction!\n  The transaction will be in a file named '" + fileName + "' in the same directory that you started this program from.\n  ")
     print()
     if os.path.exists(fileName):
         input("A file named '"+fileName+"""' already exists and will be deleted.
-Press Enter to continue""")
+Press Enter to continue\n""")
         os.remove(fileName)
     if os.path.exists(signedFileName):
         os.remove(signedFileName)
@@ -479,24 +494,23 @@ Press Enter to continue""")
         print("Replacing the previous version of " + fileName + "...")
         txnFile = open(filePath, "w")
     else: 
-        print("Writing", fileName + "...")
+        print("\nWriting", fileName + "...")
 
     txnFile.write(authorsTxnWithDid)
     txnFile.close()
-    print("...done")
+    print("...done\n")
     print()
-    input("Please send this file to your endorser so that they can sign and return it to you.")
+    input("Please send this file to your endorser so that they can sign and return it to you, then press enter to continue.")
 
     input("""The Endorser will have sent a file named '"""+signedFileName+"""'.
-Copy that file to the '""" + os.getcwd() + slash + """' directory then press enter.""")
+Copy that file to the directory that you started the program from then press enter.""")
     error = True
     while error:
         try:
             authorsSignedTxnFile = open(signedFileName)
             error = False
         except FileNotFoundError:
-            print("The file does not exist, Please ensure that the endorser sent you the correct file and it is in the correct directory.\n")
-            print("File path:", os.getcwd() + slash)
+            print("The file does not exist, Please ensure that the endorser sent you the correct file and it is in the directory you ran the program from.\n")
             print("File name:", signedFileName, '\n')
             input("Press enter when completed")
             error = True
@@ -507,53 +521,57 @@ Copy that file to the '""" + os.getcwd() + slash + """' directory then press ent
     try:
         await ledger.submit_request(poolHandle, authorsSignedTxn)
     except IndyError as CommonInvalidStructure:
-        print("ERROR: Could not write txn to ledger", CommonInvalidStructure)
+        print("ERROR: Could not write txn to network", CommonInvalidStructure)
         print()
         error = True
     except ErrorCode.LedgerInvalidTransaction:
-        print("ERROR: Could not write txn to ledger")
+        print("ERROR: Could not write txn to network")
         print()
         error = True
     if not error:
         print("\n")
-        print("Successfully written to the ledger.")
+        print("Successfully written to the network.")
     return
 
 async def createSchema(authorDid):
     print("Schema Creation\n---------------\n")
     validVer = False
     hasDot = False
+
+    print("Schema creation requires you to select a name, a version number, and the attributes you would like to have for the schema. The 'Schema Name' is your choice but should be descriptive enough for you to remember its purpose.\n")
     
-    name = input("Enter name of schema: ")
-    print("\nA schema version must only have numbers with a single dot somewhere between the first and last character. It must have at least one number before and after the dot\nExample: 1.0, 35.2, 0.12345")
+    name = input("Enter Schema Name: ")
+    print("\nA schema version must contain either 1 or 2 '.'s, and must have at least one number before and after each '.'\nExamples: 1.0, 35.2.1, 0.12345")
     print()
     while not validVer:
-        version = str(input("Enter version (1.0): "))
-        for i in range(len(version)-2):
-            if version[i+1] == '.':
-                hasDot = True
-            if (version[i+1].isnumeric() or version[i+1] == '.') and (version[i].isnumeric() or version[i] == '.') and (version[i+2].isnumeric() or version[i+2] == '.'):
-                validVer = True
-            else:
-                validVer = False
-                print("The version you entered is invalid.(not numeric)\n")
-                break
-
+        version = str(input("Enter Schema Version (1.0): "))
+    #    for i in range(len(version)-2):
+     #       if version[i+1] == '.':
+    #            hasDot = True
+    #        if (version[i+1].isnumeric() or version[i+1] == '.') and (version[i].isnumeric() or version[i] == '.') and (version[i+2].isnumeric() or version[i+2] == '.'):
+    #            validVer = True
+    #        else:
+    #            validVer = False
+    #            print("The version you entered is invalid.(not numeric)\n")
+    #            break
+#
         if version == '':
             version = '1.0'
-            validVer = True
-        elif version[0] == '.' or version[len(version)-1] == '.':
-            validVer = False
-            print("The version you entered is invalid.(invalid format)\n")
-        elif len(version) <= 2:
-            print("The version you entered is invalid.(too short)\n")
-            validVer = False
-        elif not validVer:
-            continue
-        elif not hasDot:
-            print("The version you entered is invalid.(no dot)\n")
-            validVer = False
-            
+    #        validVer = True
+    #    elif version[0] == '.' or version[len(version)-1] == '.':
+    #        validVer = False
+    #        print("The version you entered is invalid.(invalid format)\n")
+    #    elif len(version) <= 2:
+    #        print("The version you entered is invalid.(too short)\n")
+    #        validVer = False
+    #    elif not validVer:
+    #        continue
+    #    elif not hasDot:
+    #        print("The version you entered is invalid.(no dot)\n")
+    #        validVer = False            
+        validVer = re.match(r'^[0-9]+(?:\.[0-9]+){1,2}$', version)
+        if not validVer:
+            print("\nThe version you entered is invalid. A version must be in the form #.# or #.#.#\n") 
 
     attrs = []
 
@@ -562,27 +580,28 @@ async def createSchema(authorDid):
     print("\nSchema attributes must be numbers or lowercase letters without spaces or special characters. (underscores are ok)")
     print("Enter the schema's attributes names one at a time ('done' to stop, 'restart' to start over).\n")
     while add:
-        attrs.append(input("Attribute: "))
-        valid = True
-        for j in range(len(attrs[i])):
-            if attrs[i][j].isupper():
-                print("The attribute entered is invalid and will be removed(uppercase)")
-                valid = False
-                break
-            elif attrs[i][j].isspace():
-                print("The attribute entered is invalid and will be removed(space)")
-                valid = False
-                break
-            elif not attrs[i][j].isalnum():
-                if attrs[i][j] == '_':
-                    valid = True
-                else:
-                    print("The attribute entered is invalid and will be removed(special character)")
-                    valid = False
-                    break
-            else:
-                valid = True
-        if not valid:
+        attrs.append(input("Attribute "+ str(i+1) +": "))
+        #valid = True
+        #for j in range(len(attrs[i])):
+        #    if attrs[i][j].isupper():
+        #        print("The attribute entered is invalid and will be removed(uppercase)")
+        #        valid = False
+        #        break
+        #    elif attrs[i][j].isspace():
+        #        print("The attribute entered is invalid and will be removed(space)")
+        #        valid = False
+        #        break
+        #    elif not attrs[i][j].isalnum():
+        #        if attrs[i][j] == '_':
+        #            valid = True
+        #        else:
+        #            print("The attribute entered is invalid and will be removed(special character)")
+        #            valid = False
+        #            break
+        #    else:
+        #        valid = True
+        if not re.match(r'^[a-z]*(?:\_[a-z]*)*$', attrs[i]):
+            print("The attribute entered is invalid and will be removed")
             attrs.remove(attrs[i])
             i -= 1
         elif attrs[i] == '':
@@ -592,6 +611,7 @@ async def createSchema(authorDid):
             attrs.remove("done")
             add = False
         elif attrs[i] == "restart":
+            print("\nRemoved all previously entered attributes. Please start again at attribute 1.\n")
             attrs.clear()
             i -= i + 1
         i += 1
@@ -621,10 +641,13 @@ async def createSchema(authorDid):
         return "error"
 
 async def createCredDef(authorDid, poolHandle):
+    print("\nCredential Definition Creation\n------------------------------\n")
+    print("Credential Definitions, or Cred Defs, only require an existing Schema ID to be created, and allow you to issue credentials containing the specified Schema's attributes")
+    print()
     invalidSchema = True
     credDefTxn = '{"none":"0"}'
     while invalidSchema:
-        schemaID = input("Input the schema ID to use for this cred def: ")
+        schemaID = input("Input the Schema ID to use for this Cred Def: ")
         getSchemaRequest = ''
         try:
             getSchemaRequest = await ledger.build_get_schema_request(authorDid, schemaID)
@@ -661,7 +684,7 @@ async def createCredDef(authorDid, poolHandle):
             invalidSchema = False
         except KeyError:
             print("Something went wrong when getting the schema")
-            print("Most likely the schema is not on the ledger, Please try again with a valid schema ID")
+            print("Most likely the schema is not on the network, Please try again with a valid schema ID")
             invalidSchema = True
             continue
         
@@ -722,6 +745,7 @@ async def transactionAuthorAgreement(poolHandle, walletHandle, authorDid):
 
 async def main():
     network = 0
+    author = 1
     authorDid = 'none'
     authorVerKey = 'none'
     authorsTxn = 'none'
@@ -738,14 +762,14 @@ you can perform individual tasks by referring to the main menu. (Hit 'enter' now
 type 'm' to go to the main menu):""")
     os.system("clear")
     if setup != 'm':
-        poolHandle, tAA = await authorWizard()
+        poolHandle, tAA, author = await authorWizard(author)
   
  
    # Display menu for the different options for
    # author endorser communication
  
     displayMenu()
-    author = 1
+    
  
    # loop to allow user to choose many different options from the menu
  
@@ -799,7 +823,7 @@ type 'm' to go to the main menu):""")
             await createDid(role, walletHandle)
 
         elif authorAction == '10':
-            authorDid, authorVerKey = await listDids(role)
+            authorDid, authorVerKey = await listDids(role, walletHandle)
             #useDid(authorDid)
         else:
             displayMenu()
