@@ -767,8 +767,8 @@ type 'm' to go to the main menu):""")
  
    # Display menu for the different options for
    # author endorser communication
- 
-    displayMenu()
+    if author:
+        displayMenu()
     
  
    # loop to allow user to choose many different options from the menu
