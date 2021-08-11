@@ -221,7 +221,7 @@ async def openWallet():
 
     return
     
-async def authorWizard():
+async def authorWizard(author):
     poolHandle = None
     print("\nAuthor Wizard\n-------------\n")
     print("To begin, you must select or add the network that you would like to use for issuing credentials. If you select \"Add New Network\" you will be given a choice of which network to add to your list of choices, then that network will be used during the rest of this session.")
