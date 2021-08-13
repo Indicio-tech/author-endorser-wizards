@@ -1,26 +1,20 @@
 # Author-Endorser-Wizards
-Python program to walk through the author and endorser workflow to create schemas and cred defs
+
+Python program to walk through the author and endorser workflow to create schemas and cred defs 
 
 ## Docker Instructions
 
-Navigate to your git directory, if you don't have one
-* mkdir git
-* cd git
-
-Once in your git directory,
-
-* git clone https://github.com/Indicio-tech/author-endorser-wizards.git
-* cd author-endorser-wizards
-
 ### Running the Endorser
+once you have cloned the repo,
 
-* docker build -t endorser-wizard -f endorser-docker-file .
-* docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/.indy_client/pool:z endorser-wizard 
-  * \(If on windows run: docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/.indy_client/pool:z endorser-wizard\)
+* docker build -t endorser-wizard -f endorser-docker-file . (the dot is important, as it signifys the current directory)
+* docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z endorser-wizard 
+  * \(If on windows run: docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z endorser-wizard\)
 ### Running the Author
-* docker build -t author-wizard -f author-docker-file .
-* docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/.indy_client/pool:z author-wizard
-  * \(If on windows run: docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/.indy_client/pool:z author-wizard
+* docker build -t author-wizard -f author-docker-file . (the dot is important, as it signifys the current directory)
+* docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z author-wizard
+  * \(If on windows run: docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z author-wizard
+
 
 ## Alternate Setup Instructions
 If your not using Docker, here are the individual setup and running instructions you can follow to run the author and endorser wizards
