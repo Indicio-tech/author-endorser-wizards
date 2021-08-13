@@ -1,4 +1,5 @@
 # Author-Endorser-Wizards
+
 Python program to walk through the author and endorser workflow to create schemas and cred defs 
 
 ## Docker Instructions
@@ -13,6 +14,7 @@ once you have cloned the repo,
 * docker build -t author-wizard -f author-docker-file . (the dot is important, as it signifys the current directory)
 * docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z author-wizard
   * \(If on windows run: docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z author-wizard
+
 
 ## Alternate Setup Instructions
 If your not using Docker, here are the individual setup and running instructions you can follow to run the author and endorser wizards
