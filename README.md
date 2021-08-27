@@ -15,11 +15,11 @@ Python program to walk through the author and endorser workflow to create schema
 ### Running the Endorser <a id="endorser"></a>
 Once you have cloned the repo,
 
-1. `docker build -t endorser-wizard -f endorser-docker-file .` (The dot is important, as it signifies the current directory.)
+1. `docker build -t endorser-wizard -f endorser-docker-file .` (The dot is important as it signifies the current directory.)
 2. `docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z endorser-wizard`
     * If on windows run: `docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z endorser-wizard\`
 ### Running the Author <a id="author"></a>
-1. `docker build -t author-wizard -f author-docker-file .` (The dot is important, as it signifies the current directory.)
+1. `docker build -t author-wizard -f author-docker-file .` (The dot is important as it signifies the current directory.)
 2. `docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z author-wizard`
    * If on windows run: `docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z author-wizard`
 
