@@ -1,10 +1,10 @@
-[**Docker Instructions**](#docker)
-[Endorser](#endorser)
-[Author](#author)
-[**Alternate Setup Instructions**](#alternate)
-[Linux](#linux)
-[Windows](#windows)
-[Mac](#mac)
+[**Docker Instructions**](#docker)  
+[Endorser](#endorser)  
+[Author](#author)  
+[**Alternate Setup Instructions**](#alternate)  
+[Linux](#linux)  
+[Windows](#windows)  
+[Mac](#mac)  
 [**Running Instructions**](#running)
 
 # Author-Endorser-Wizards
