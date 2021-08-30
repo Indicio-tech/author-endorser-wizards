@@ -8,7 +8,7 @@
 [**Running Instructions**](#running)
 
 # Author-Endorser-Wizards
-Python program to walk through the author and endorser workflow to create schemas and cred defs.
+This is a Python program to walk through the author and endorser workflow to create schemas and cred defs.
 
 ## Docker Instructions <a id="docker"></a>
 
@@ -29,7 +29,7 @@ If you're not using Docker, here are the individual setup and running instructio
 
 ### Linux 18.04 <a id="linux"></a>
 
-On a clean install of Ubuntu 18.04, the following works to install and run the Appropriate Wizard.  Please adjust if appropriate for your environment.
+On a clean install of Ubuntu 18.04, the following works to install and run the Appropriate Wizard.  Please adjust as needed for your environment.
 #### Install libindy
 1. `sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88`
 2. `sudo add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic stable"`
@@ -52,7 +52,7 @@ Skip to [Running Instructions](#running).
 1. Install Python 3.9
 2. Download latest from https://repo.sovrin.org/windows/libindy/stable
 3. Extract the libindy folder to your desired directory
-4. Run in Command Prompt, `set LIBINDY_DIR=\<Full path to the libindy folder\>`
+4. Run in Command Prompt: `set LIBINDY_DIR=\<Full path to the libindy folder\>`
 5. `set PYTHONPATH=C:\Python39\Lib\site-packages`
 6. `set PATH=C:\Python39`
 7. `pip3 install asyncio aiohttp indy base58 Python3-indy`
@@ -68,7 +68,7 @@ Since there is no public build of libindy, you will need to build it yourself wi
         1. `cd ~`
         2. `mkdir github`
         3. `cd github`
-        4. `git clone https://github.com/hyperledger/indy-sdk.git` (You might need `xcode-select --install` if error occurs or select “install” if it offers xcode tools)
+        4. `git clone https://github.com/hyperledger/indy-sdk.git` (You might need `xcode-select --install` if an error occurs or select “install” if it offers xcode tools)
         5. `/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
         6. `curl https://sh.rustup.rs -sSf | sh`
 	        1. Follow the on-screen instructions to install rust
