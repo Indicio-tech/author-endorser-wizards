@@ -22,6 +22,7 @@ Once you have cloned the repo,
 1. `docker build -t author-wizard -f author-docker-file .` (The dot is important as it signifies the current directory.)
 2. `docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z author-wizard`
    * If on windows run: `docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z author-wizard`
+---
 
 ## Alternate Setup Instructions <a id="alternate"></a>
 If you're not using Docker, here are the individual setup and running instructions you can follow to run the author and endorser wizards.
@@ -44,6 +45,8 @@ On a clean install of Ubuntu 18.04, the following works to install and run the A
 5. `pip3 install --upgrade pip`
 6. `pip3 install aiohttp base58 indy Python3-indy asyncio`
 
+Skip to [Running Instructions](#running).
+
 
 ### Windows 10 <a id="windows"></a>
 1. Install Python 3.9
@@ -53,10 +56,54 @@ On a clean install of Ubuntu 18.04, the following works to install and run the A
 5. `set PYTHONPATH=C:\Python39\Lib\site-packages`
 6. `set PATH=C:\Python39`
 7. `pip3 install asyncio aiohttp indy base58 Python3-indy`
+8. Skip to [Running Instructions](#running).
 
 
 ### MacOs <a id="mac"></a>
-Instructions are coming soon.
+On a Mac OSX workstation/laptop the following works to install and run the appropriate Wizard.  Please adjust as needed for your environment.
+
+1. Build libindy  
+Since there is no public build of libindy, you will need to build it yourself with the following set of instructions:
+    1. Run the following commands in a terminal:
+        1. `cd ~`
+        2. `mkdir github`
+        3. `cd github`
+        4. `git clone https://github.com/hyperledger/indy-sdk.git` (You might need `xcode-select --install` if error occurs or select “install” if it offers xcode tools)
+        5. `/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+        6. `curl https://sh.rustup.rs -sSf | sh`
+	        1. Follow the on-screen instructions to install rust
+        7. `brew install pkg-config libsodium automake autoconf cmake openssl zeromq zmq`
+    2. NOTE: the _openssl_ path needs to match what you currently have on your system
+        1. Run `ls /usr/local/Cellar/openssl/`
+        2. Note the name of the directory shown 
+        3. Use this directory in place of the one listed below in your _.profile_ file 
+    3. Add the following lines to your _~/.profile_ file (making the correction shown in the previous step if needed)  
+`export PATH="$HOME/.cargo/bin:$PATH:~/github/indy-sdk/libindy/target/debug:~/github/indy-sdk/cli/target/debug"`  
+`export PKG_CONFIG_ALLOW_CROSS=1`  
+`export CARGO_INCREMENTAL=1`  
+`export RUST_LOG=indy=trace`  
+`export RUST_TEST_THREADS=1`  
+`export OPENSSL_DIR=/usr/local/Cellar/openssl/1.0.2p` #use your path  
+`export LIBRARY_PATH=~/github/indy-sdk/libindy/target/debug/`  
+`export LIBINDY_DIR=~/github/indy-sdk/libindy/target/debug/`
+    4. Run the following commands from your terminal to build libindy and create a link to it:
+        1. `source ~/.profile`
+        2. `cd ~/github/indy-sdk/libindy`
+        3. `cargo build`
+        4. Use your own path in the following command: `ln -s /Users/username/github/indy-sdk/libindy/target/debug/*.dylib* /usr/local/lib`
+2. Python 3.8 (or greater)  
+If you do not already have it installed, install Python 3.8 or greater:
+    1. `python3 --version`  (to check your version)
+    2. There are multiple ways to do this for a Mac. Here is a link to one of the options: <https://installpython3.com/mac/>
+3. `pip3 install aiohttp base58 indy Python3-indy asyncio`
+4. `cd ~/github`
+5. `git clone https://github.com/Indicio-tech/author-endorser-wizards.git`
+6. `cd author-endorser-wizards`
+7. If you are the Author run: `python3 AuthorWizard.py`
+8. If you are the Endorser run: `python3 EndorserWizard.py`
+
+---
+
 
 ## Running Instructions <a id="running"></a>
 #### Navigate to the author-endorser-wizards directory:
