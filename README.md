@@ -1,7 +1,7 @@
 # Author-Endorser-Wizards
 This open source project contains wizards that guide the user through the Author-Endorser workflow to create schemas and credential definitions. 
 
-The easiest way to setup the author and endorser wizards is to use Docker. However, if that is not available to you, instructions for Linux, Window and Mac are also provided. 
+The easiest way to setup the author and endorser wizards is to use Docker. However, if that is not available to you, instructions for Linux, Windows 10, and Mac are also provided. 
 
 [**Docker Instructions**](#docker)  
 [Author](#author)  
