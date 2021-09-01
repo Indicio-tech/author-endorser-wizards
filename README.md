@@ -1,27 +1,33 @@
+# Author-Endorser-Wizards
+This open source project contains wizards that guide the user through the Author-Endorser workflow to create schemas and credential definitions. 
+
+The easiest way to setup the author and endorser wizards is to use Docker. However, if that is not available to you, instructions for Linux, Window and Mac are also provided. 
+
 [**Docker Instructions**](#docker)  
-[Endorser](#endorser)  
 [Author](#author)  
+[Endorser](#endorser)  
 [**Alternate Setup Instructions**](#alternate)  
 [Linux](#linux)  
 [Windows](#windows)  
 [Mac](#mac)  
 [**Running Instructions**](#running)
 
-# Author-Endorser-Wizards
-This is a Python program to walk through the author and endorser workflow to create schemas and cred defs.
+---
 
-## Docker Instructions <a id="docker"></a>
+## Docker Setup Instructions <a id="docker"></a>
 
-### Running the Endorser <a id="endorser"></a>
-Once you have cloned the repo,
+### Running the Author Wizard <a id="author"></a>
+1. `docker build -t author-wizard -f author-docker-file .` (The dot is important as it signifies the current directory.)
+2. `docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z author-wizard`
+   * If on windows run: `docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z author-wizard`
+
+### Running the Endorser Wizard<a id="endorser"></a>
+Once you have cloned the repo, do the following:
 
 1. `docker build -t endorser-wizard -f endorser-docker-file .` (The dot is important as it signifies the current directory.)
 2. `docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z endorser-wizard`
     * If on windows run: `docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z endorser-wizard\`
-### Running the Author <a id="author"></a>
-1. `docker build -t author-wizard -f author-docker-file .` (The dot is important as it signifies the current directory.)
-2. `docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z author-wizard`
-   * If on windows run: `docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z author-wizard`
+
 ---
 
 ## Alternate Setup Instructions <a id="alternate"></a>
