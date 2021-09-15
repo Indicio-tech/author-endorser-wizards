@@ -15,7 +15,7 @@ The easiest way to setup the author and endorser wizards is to use Docker. Howev
 ---
 
 ## Docker Setup Instructions <a id="docker"></a>
-Once you have cloned the repo, do the following:
+Once you have cloned the repo, do the following: 
 
 ### Running the Author Wizard <a id="author"></a>
 1. `docker build -t author-wizard -f author-docker-file .` (The dot is important as it signifies the current directory.)
