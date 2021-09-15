@@ -15,6 +15,7 @@ The easiest way to setup the author and endorser wizards is to use Docker. Howev
 ---
 
 ## Docker Setup Instructions <a id="docker"></a>
+Once you have cloned the repo, do the following:
 
 ### Running the Author Wizard <a id="author"></a>
 1. `docker build -t author-wizard -f author-docker-file .` (The dot is important as it signifies the current directory.)
@@ -22,7 +23,6 @@ The easiest way to setup the author and endorser wizards is to use Docker. Howev
    * If on windows run: `docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z author-wizard`
 
 ### Running the Endorser Wizard<a id="endorser"></a>
-Once you have cloned the repo, do the following:
 
 1. `docker build -t endorser-wizard -f endorser-docker-file .` (The dot is important as it signifies the current directory.)
 2. `docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z endorser-wizard`
