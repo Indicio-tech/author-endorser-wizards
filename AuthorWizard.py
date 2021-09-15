@@ -102,9 +102,9 @@ async def listPools(role):
     return poolList
  
 async def createWallet():
-    walletName = "wizard_wallet" # input("What would you like to name your wallet?: ")
+    walletName = "default" # input("What would you like to name your wallet?: ")
     #seed = input("Insert your seed here. If you want a random seed, insert nothing: ")
-    walletKey = "wizard_wallet" #wallet.generate_wallet_key(seed)
+    walletKey = "" #wallet.generate_wallet_key(seed)
  
     walletID = {
         "id": walletName
@@ -184,11 +184,11 @@ async def openWallet():
     if dirExists:
         walletExists = False
         for i in range(len(walletList)):
-            if walletList[i] == "wizard_wallet":
+            if walletList[i] == "default":
                 walletExists = True
                 
         if walletExists:
-            walletName = "wizard_wallet"
+            walletName = "default"
         else:
             walletName = await createWallet()
     else:
@@ -202,7 +202,7 @@ async def openWallet():
         "id": walletName
     }
     walletKeyConfig = {
-        "key": walletName
+        "key": ""
     }
     walletNameConfig = json.dumps(walletNameConfig)
     walletKeyConfig = json.dumps(walletKeyConfig)
@@ -762,7 +762,7 @@ you can perform individual tasks by referring to the main menu. (Hit 'enter' now
 type 'm' to go to the main menu):""")
     os.system("clear")
     if setup != 'm':
-        poolHandle, tAA, author = await authorWizard(author)
+        poolHandle, tAA, author = await authorWizard()
   
  
    # Display menu for the different options for
@@ -778,7 +778,7 @@ type 'm' to go to the main menu):""")
         if authorAction == 'q':
             author = 0
         elif authorAction == '0':
-            poolHandle, tAA = await authorWizard()
+            poolHandle, tAA, author = await authorWizard()
         elif authorAction == '1':
             authorDid, authorVerKey = await listDids(role)
             await createSchema(authorDid)
