@@ -185,7 +185,7 @@ async def openWallet():
     if walletName == "endorser_wizard_wallet":
         walletKey = walletName
     else:
-        walletKey = input("Enter your Wallet Key: ")
+        walletKey = input("Enter your Wallet Key (password): ")
     
     walletNameConfig = {
         "id": walletName
