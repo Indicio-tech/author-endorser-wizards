@@ -10,11 +10,10 @@ import secrets
 import string
 from aiohttp import web
 from ctypes import cdll
-from indy import ledger, did, wallet, pool, anoncreds
+from indy import ledger, did, wallet, pool, anoncreds, non_secrets
 from indy.error import ErrorCode, IndyError, PoolLedgerConfigAlreadyExistsError
 import platform
 import re
-
 
 
 os.system("clear")
@@ -689,6 +688,21 @@ async def createCredDef(authorDid, poolHandle):
         except IndyError as err:
             print(err)
             print("Error while creating cred def")
+        try:
+            value=json.dumps({
+                "schema_id": schemaID,
+                "schema_issuer_did": schemaID.split(":")[0],
+                "schema_name": schemaJson["name"],
+                "schema_version": schemaJson["version"],
+                "issuer_did": authorDid,
+                "cred_def_id": credDefId,
+                "epoch": str(int(datetime.datetime.now(datetime.timezone.utc).timestamp())),
+            })
+            newrec=await non_secrets.add_wallet_record(walletHandle, "cred_def_sent", credDefId, value, None)
+            print (newrec)
+        except IndyError as err:
+            print(err)
+            print("\nError adding wallet record")
         try:
             credDefTxn = await ledger.build_cred_def_request(authorDid, credDefJson)
         except IndyError as err:
