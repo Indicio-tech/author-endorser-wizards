@@ -78,7 +78,7 @@ Press Enter to continue""")
     endorsedTxnFile = open(signedFilePath, 'w')
     endorsedTxnFile.write(endorsedTxn)
     endorsedTxnFile.close()
-    return endorsedTxn, signedFilePath
+    return endorsedTxn, signedFileName
 
 
 
@@ -96,7 +96,7 @@ async def createWallet():
     walletID = {
         "id": walletName
     }
- 
+
     walletKey = {
         "key": walletKey
     }
@@ -247,7 +247,7 @@ async def writeAuthorToLedger(poolHandle, authorTxnJson, endorserDid, tAA):
     if resp["result"]["seqNo"] == None:
         result = ''
         try:
-            reqJson = await ledger.build_nym_request(endorserDid, authorDid, authorVerKey, None)
+            reqJson = await ledger.build_nym_request(endorserDid, authorDid, authorVerKey, None, None)
         except:
             print("Error initiating nym request")
         try:
@@ -315,9 +315,9 @@ async def endorserWizard(endorser):
     input("\n\nPress enter to continue when the Author has completed building their transaction.")
     print()
     while endorsing:
-        endorsedTxn, endorsedTxnFile = await signTxn(poolHandle, endorserDid, tAA)
+        endorsedTxn, endorsedTxnName = await signTxn(poolHandle, endorserDid, tAA)
         print('\n')
-        print("Signed txn file:", endorsedTxn,"\n\nSend the above Transaction back to the Author to send to the network.")
+        print("Signed txn file:", endorsedTxnName,"\n\nSend the above Transaction back to the Author to send to the network.")
         again = input("\nDo you have another Transaction to sign? (Y/n): ")
         if again == 'n' or again == 'N':
             endorsing = False
@@ -375,9 +375,9 @@ referring to the main menu. (Hit 'enter' now to use the wizard, or type 'm' to g
             elif tAA == '':
                 print("agreement to the TAA is required for this action. Please agree to the TAA (option 8)")
             else:
-                endorsedTxn, endorsedTxnFile = await signTxn(poolHandle, endorserDid, tAA)
+                endorsedTxn, endorsedTxnName = await signTxn(poolHandle, endorserDid, tAA)
                 print('\n')
-                print("Signed txn file:", endorsedTxn, "\nPass the above Transaction back to the author to send to the ledger.")
+                print("Signed txn file:", endorsedTxnName, "\nPass the above Transaction back to the author to send to the ledger.")
         elif endorserAction == '2':
             network = listNetworks()
             await createPool(network)

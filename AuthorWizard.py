@@ -173,7 +173,7 @@ async def openWallet():
     error = True
     while(error):
         try:
-            walletIndex = input("Select the wallet you want to use to issue credentials (3): ")
+            walletIndex = input("Select the wallet you want to use to issue credentials ("+str(len(walletList)+1)+"): ")
             print()
             if walletIndex == '':
                 walletIndex = len(walletList)+1
@@ -441,10 +441,13 @@ async def listDids(role, walletHandle):
             index = input("Select an "+role+" DID (" + str(len(didList)+1) + "): ")
             print()
             if index == '':
-                index = len(didList)+1
+                index = str(len(didList)+1)
             temp = int(index)
         except ValueError:
             print("\nPlease enter a numeric value.\n")
+        except:
+            print("An unknown error occured.")
+            raise
         else:
             error = False
 
@@ -550,6 +553,9 @@ Copy that file to the directory that you started the program from then press ent
         print("ERROR: Could not write txn to network")
         print()
         error = True
+    except:
+        print("An unknown error occured.")
+        raise
     if not error:
         print("\n")
         print("Successfully written to the network.")
