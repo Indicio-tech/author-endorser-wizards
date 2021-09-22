@@ -8,6 +8,7 @@ import urllib
 import datetime
 import secrets
 import string
+import uuid
 from aiohttp import web
 from ctypes import cdll
 from indy import ledger, did, wallet, pool, anoncreds, non_secrets
@@ -387,7 +388,7 @@ async def createDid(role, walletHandle):
     didMetadata = role + " DID created by wizard"
     print()
     try:
-        await did.set_did_metadata(walletHandle, authorDid[0], didMetadata)
+        await did.set_did_metadata(walletHandle, authorDid[0], json.dumps({"comment": didMetadata}))
     except IndyError:
         print("\n")
         print("Error setting metadata")
@@ -726,7 +727,7 @@ async def createCredDef(authorDid, poolHandle):
             print(err)
             print("Error while creating cred def")
         try:
-            value=json.dumps({
+            tags = json.dumps({
                 "schema_id": schemaID,
                 "schema_issuer_did": schemaID.split(":")[0],
                 "schema_name": schemaJson["name"],
@@ -735,8 +736,15 @@ async def createCredDef(authorDid, poolHandle):
                 "cred_def_id": credDefId,
                 "epoch": str(int(datetime.datetime.now(datetime.timezone.utc).timestamp())),
             })
-            newrec=await non_secrets.add_wallet_record(walletHandle, "cred_def_sent", credDefId, value, None)
-            print (newrec)
+            await non_secrets.add_wallet_record(walletHandle, "cred_def_sent", credDefId, credDefId, tags)
+            tags = json.dumps({
+                "cred_def_id": credDefId,
+                "schema_id": schemaID,
+                "state": "written",
+                "author": "self",
+            })
+            value = json.dumps({"attributes": schemaJson["attrNames"]})
+            await non_secrets.add_wallet_record(walletHandle, "cred_def", str(uuid.uuid4()), value, tags)
         except IndyError as err:
             print(err)
             print("\nError adding wallet record")
