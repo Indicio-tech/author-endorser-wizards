@@ -81,9 +81,6 @@ Press Enter to continue""")
     return endorsedTxn, signedFileName
 
 
-
-
-
 async def createWallet():
     print("\nWallet Creation\n---------------\n")
 
