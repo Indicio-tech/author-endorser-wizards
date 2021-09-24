@@ -8,13 +8,13 @@ import urllib
 import datetime
 import secrets
 import string
+import uuid
 from aiohttp import web
 from ctypes import cdll
-from indy import ledger, did, wallet, pool, anoncreds
-from indy.error import ErrorCode, IndyError, PoolLedgerConfigAlreadyExistsError
+from indy import ledger, did, wallet, pool, anoncreds, non_secrets
+from indy.error import ErrorCode, IndyError, PoolLedgerConfigAlreadyExistsError, WalletAlreadyExistsError
 import platform
 import re
-
 
 
 os.system("clear")
@@ -104,24 +104,28 @@ async def listPools(role):
 async def createWallet():
     walletName = "wizard_wallet" # input("What would you like to name your wallet?: ")
     #seed = input("Insert your seed here. If you want a random seed, insert nothing: ")
-    walletKey = "wizard_wallet" #wallet.generate_wallet_key(seed)
+    walletKey = "wizard_wallet" # wallet.generate_wallet_key(seed)
  
     walletID = {
         "id": walletName
     }
  
-    walletKey = {
+    walletKeyJson = {
         "key": walletKey
     }
  
-    walletKeyJson = json.dumps(walletKey)
+    walletKeyJson = json.dumps(walletKeyJson)
     walletIDJson = json.dumps(walletID)
  
    #create wallet code
     print("Creating new wallet '" + walletName + "'...")
  
+    
+
     try:
         await wallet.create_wallet(walletIDJson, walletKeyJson)
+    except WalletAlreadyExistsError:
+        print("\nThe Wallet " + walletName + " already exsists and will be opened\n")
     except:
         print("\n")
         print("Error creating wallet '" + walletName + "'")
@@ -130,10 +134,13 @@ async def createWallet():
     else:
         print("...done")
 
-    return walletName
+    return walletName, walletKey
 
 def listWallets():
     print("\nWallet Selection\n----------------\n")
+    print("Below is a list of the wallets you have available.  Choose the wallet with the Author DID you are going to use to issue credentials.")
+    print("If you don't have an Author DID, you can choose 'Create new wallet'.")
+    print()
     userDir = os.path.expanduser("~")
     dirExists = True
     filePath = "/.indy_client/wallet/"
@@ -153,19 +160,39 @@ def listWallets():
         print("Your Wallets:")
         for i in range(len(walletList)):
             print(' ' + str(i+1) + ":", walletList[i])
-        print()
-   #list wallet code
+        print(' ' + str(len(walletList) + 1) + ": Create New Wallet")
+   
     return walletList
  
 async def openWallet():
-   #walletList = listWallets()
-   #print(' ' + str(len(walletList) + 1) + ": Create New Wallet")
- 
-   #walletIndex = input("Choose the index number of the wallet you want to open: ")
-   #if walletIndex == len(walletList):
-   #    createWallet()
+    walletList = listWallets()
+    walletKey = ""
+    walletName = ""
+    print()
 
-    walletName = "none"
+    error = True
+    while(error):
+        try:
+            walletIndex = input("Select the wallet you want to use to issue credentials ("+str(len(walletList)+1)+"): ")
+            print()
+            if walletIndex == '':
+                walletIndex = len(walletList)+1
+            temp = int(walletIndex)
+        except ValueError:
+            print("\nPlease enter a numeric value.\n")
+        else:
+            error = False
+
+    if int(walletIndex) < len(walletList)+1:
+        walletName = walletList[int(walletIndex)-1]
+        walletKey = input("Enter your Wallet Key (password): ")
+        print()
+    elif int(walletIndex) > len(walletList)+1:
+        print("The index selected exceeds the number of wallets you have.  Selecting default 'Create new wallet'")
+        walletName, walletKey = await createWallet()
+    else:
+        walletName, walletKey = await createWallet()
+        
     userDir = os.path.expanduser("~")
     dirExists = True
     filePath = "/.indy_client/wallet/"
@@ -179,30 +206,13 @@ async def openWallet():
         print("\n")
         print("Error getting the list of wallets")
         print("\n")
-    
-        
-    if dirExists:
-        walletExists = False
-        for i in range(len(walletList)):
-            if walletList[i] == "wizard_wallet":
-                walletExists = True
-                
-        if walletExists:
-            walletName = "wizard_wallet"
-        else:
-            walletName = await createWallet()
-    else:
-        walletName = await createWallet()
 
-    #walletList[int(walletIndex)-1]
-
-    #walletKey = input("Key: ")
     
     walletNameConfig = {
         "id": walletName
     }
     walletKeyConfig = {
-        "key": walletName
+        "key": walletKey
     }
     walletNameConfig = json.dumps(walletNameConfig)
     walletKeyConfig = json.dumps(walletKeyConfig)
@@ -215,13 +225,14 @@ async def openWallet():
         print("\n")
         print("Error opening wallet '" + walletName + "'")
         print("\n")
+        raise
     else:
         print("...done")
-        print('\n')
+        print()
 
     return
     
-async def authorWizard():
+async def authorWizard(author):
     poolHandle = None
     print("\nAuthor Wizard\n-------------\n")
     print("To begin, you must select or add the network that you would like to use for issuing credentials. If you select \"Add New Network\" you will be given a choice of which network to add to your list of choices, then that network will be used during the rest of this session.")
@@ -237,7 +248,8 @@ async def authorWizard():
     else:
        poolHandle = await openPool(userPool)
   
-   #print("Below is a list of wallets:")
+    #print("Below is a list of wallets:")
+    await openWallet()
     
     authorDid, authorVerKey = await listDids(role, walletHandle)
    #listDids()
@@ -246,7 +258,6 @@ async def authorWizard():
        #authorDidSeed = input("Enter your super secret seed for your new did: ")
        #authorDid = createDidFromSeed(authorDidSeed)
    #didUse(authorDid)
-    print("\n")
     
     tAA = await transactionAuthorAgreement(poolHandle, walletHandle, authorDid)
 
@@ -377,7 +388,7 @@ async def createDid(role, walletHandle):
     didMetadata = role + " DID created by wizard"
     print()
     try:
-        await did.set_did_metadata(walletHandle, authorDid[0], didMetadata)
+        await did.set_did_metadata(walletHandle, authorDid[0], json.dumps({"comment": didMetadata}))
     except IndyError:
         print("\n")
         print("Error setting metadata")
@@ -391,6 +402,7 @@ async def createDid(role, walletHandle):
 
 async def listDids(role, walletHandle):
     didListJson = ''
+    error = True
     print("\n"+role+"'s DIDs\n------------\n")
     print("Adding issuer transactions to the ledger requires you to create and maintain an \""+role+" DID\".  Select your "+role+" DID from the following list, or create a new one and save the seed in a safe place. ")
     print()
@@ -423,10 +435,23 @@ async def listDids(role, walletHandle):
     else:
         print("     " + str(len(didList)+1) + " |", "Create New DID        ", '|', "Create a new DID to use")
     print()
-    index = input("Select an "+role+" DID (" + str(len(didList)+1) + "): ")
-    print()
-    
-    if index == '':
+        
+    while(error):
+        try:
+            index = input("Select an "+role+" DID (" + str(len(didList)+1) + "): ")
+            print()
+            if index == '':
+                index = str(len(didList)+1)
+            temp = int(index)
+        except ValueError:
+            print("\nPlease enter a numeric value.\n")
+        except:
+            print("An unknown error occured.")
+            raise
+        else:
+            error = False
+
+    if index == '' or int(index) > (len(didList)+1):
         authorDid, authorVerKey = await createDid(role, walletHandle)
     elif index == str(len(didList)+1):
         authorDid, authorVerKey = await createDid(role, walletHandle)
@@ -500,7 +525,7 @@ Press Enter to continue\n""")
     txnFile.close()
     print("...done\n")
     print()
-    input("Please send this file to your endorser so that they can sign and return it to you, then press enter to continue.")
+    input("Please send the file "+fileName+" to your endorser so that they can sign and return it to you, then press enter to continue.")
 
     input("""The Endorser will have sent a file named '"""+signedFileName+"""'.
 Copy that file to the directory that you started the program from then press enter.""")
@@ -528,6 +553,9 @@ Copy that file to the directory that you started the program from then press ent
         print("ERROR: Could not write txn to network")
         print()
         error = True
+    except:
+        print("An unknown error occured.")
+        raise
     if not error:
         print("\n")
         print("Successfully written to the network.")
@@ -665,7 +693,7 @@ async def createCredDef(authorDid, poolHandle):
             schemaJsonResp = await ledger.submit_request(poolHandle, getSchemaRequest)
         except IndyError:
             print("indy is reporting an error")
-            schemaJsonResp = '"error": "indyerror"'
+            schemaJsonResp = '{"error": "indyerror"}'
         except:
             print("the system is reporting an error")
         
@@ -699,6 +727,39 @@ async def createCredDef(authorDid, poolHandle):
             print(err)
             print("Error while creating cred def")
         try:
+            timestamp = str(int(datetime.datetime.now(datetime.timezone.utc).timestamp()))
+            tags = json.dumps({
+                "schema_id": schemaID,
+                "schema_issuer_did": schemaID.split(":")[0],
+                "schema_name": schemaJson["name"],
+                "schema_version": schemaJson["version"],
+                "issuer_did": authorDid,
+                "cred_def_id": credDefId,
+                "epoch": timestamp,
+            })
+            #this is for aca-py
+            await non_secrets.add_wallet_record(walletHandle, "cred_def_sent", credDefId, credDefId, tags)
+            tags = json.dumps({
+                "cred_def_id": credDefId,
+                "schema_id": schemaID,
+                "state": "written",
+                "author": "self",
+            })
+            value = json.dumps({
+                "attributes": schemaJson["attrNames"],
+                "cred_def_id": credDefId,
+                "schema_id": schemaID,
+                "state": "written",
+                "author": "self",
+                "created_at": timestamp,
+                "updated_at": timestamp,
+            })
+            #this is for aries toolbox
+            await non_secrets.add_wallet_record(walletHandle, "cred_def", str(uuid.uuid4()), value, tags)
+        except IndyError as err:
+            print(err)
+            print("\nError adding wallet record")
+        try:
             credDefTxn = await ledger.build_cred_def_request(authorDid, credDefJson)
         except IndyError as err:
             print(err)
@@ -711,7 +772,7 @@ async def transactionAuthorAgreement(poolHandle, walletHandle, authorDid):
     answered = False
     add_taa_resp_json = json.dumps({"response": "none"})
 
-    print("Transaction Author Agreement\n----------------------------\n")
+    print("\nTransaction Author Agreement\n----------------------------\n")
     
     print("Please agree to the Transaction Author Agreement(TAA) before continuing.")
     print()
@@ -749,11 +810,11 @@ async def main():
     authorDid = 'none'
     authorVerKey = 'none'
     authorsTxn = 'none'
-    await openWallet()
     poolHandle = 0
     poolList = await pool.list_pools()
     tAA = ''
-    setup = input("""Welcome to the Author wizard!
+    setup = input("""Welcome to the Transaction Author wizard!
+
 If you are running this, it means that you would like to issue Hyperledger Indy based credentials, but
 you are not an Endorser on the network from which you want to issue them. This script will help you
 create and prepare the transactions you need that you can then send to an Endorser for their signature
@@ -767,10 +828,9 @@ type 'm' to go to the main menu):""")
  
    # Display menu for the different options for
    # author endorser communication
- 
-    displayMenu()
-    
- 
+    if author:
+        displayMenu()
+     
    # loop to allow user to choose many different options from the menu
  
     while author:
@@ -778,7 +838,7 @@ type 'm' to go to the main menu):""")
         if authorAction == 'q':
             author = 0
         elif authorAction == '0':
-            poolHandle, tAA = await authorWizard()
+            poolHandle, tAA, author = await authorWizard(author)
         elif authorAction == '1':
             authorDid, authorVerKey = await listDids(role)
             await createSchema(authorDid)
