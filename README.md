@@ -15,6 +15,7 @@ The easiest way to setup the author and endorser wizards is to use Docker. Howev
 ---
 
 ## Docker Setup Instructions <a id="docker"></a>
+Once you have cloned the repo, do the following: 
 
 ### Running the Author Wizard <a id="author"></a>
 Once you have cloned the repo, do the following:
@@ -24,7 +25,6 @@ Once you have cloned the repo, do the following:
    * If on windows, replace `$(pwd)`, `$HOME`, and directory separators with the appropriate values.
 
 ### Running the Endorser Wizard<a id="endorser"></a>
-Once you have cloned the repo, do the following:
 
 1. If you have not already built the image: `docker build -t wizard .` (The dot is important as it signifies the current directory.)
 2. `docker run --rm -it -v $(pwd):/app:z -v $HOME/.indy_client:/home/indy/.indy_client:z wizard /app/EndorserWizard.py`

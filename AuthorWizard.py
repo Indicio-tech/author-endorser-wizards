@@ -859,34 +859,35 @@ async def createCredDef(authorDid, poolHandle):
             print(err)
             print("Error while creating cred def")
         try:
-            tags = json.dumps(
-                {
-                    "schema_id": schemaID,
-                    "schema_issuer_did": schemaID.split(":")[0],
-                    "schema_name": schemaJson["name"],
-                    "schema_version": schemaJson["version"],
-                    "issuer_did": authorDid,
-                    "cred_def_id": credDefId,
-                    "epoch": str(
-                        int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-                    ),
-                }
-            )
-            await non_secrets.add_wallet_record(
-                walletHandle, "cred_def_sent", credDefId, credDefId, tags
-            )
-            tags = json.dumps(
-                {
-                    "cred_def_id": credDefId,
-                    "schema_id": schemaID,
-                    "state": "written",
-                    "author": "self",
-                }
-            )
-            value = json.dumps({"attributes": schemaJson["attrNames"]})
-            await non_secrets.add_wallet_record(
-                walletHandle, "cred_def", str(uuid.uuid4()), value, tags
-            )
+            timestamp = str(int(datetime.datetime.now(datetime.timezone.utc).timestamp()))
+            tags = json.dumps({
+                "schema_id": schemaID,
+                "schema_issuer_did": schemaID.split(":")[0],
+                "schema_name": schemaJson["name"],
+                "schema_version": schemaJson["version"],
+                "issuer_did": authorDid,
+                "cred_def_id": credDefId,
+                "epoch": timestamp,
+            })
+            #this is for aca-py
+            await non_secrets.add_wallet_record(walletHandle, "cred_def_sent", credDefId, credDefId, tags)
+            tags = json.dumps({
+                "cred_def_id": credDefId,
+                "schema_id": schemaID,
+                "state": "written",
+                "author": "self",
+            })
+            value = json.dumps({
+                "attributes": schemaJson["attrNames"],
+                "cred_def_id": credDefId,
+                "schema_id": schemaID,
+                "state": "written",
+                "author": "self",
+                "created_at": timestamp,
+                "updated_at": timestamp,
+            })
+            #this is for aries toolbox
+            await non_secrets.add_wallet_record(walletHandle, "cred_def", str(uuid.uuid4()), value, tags)
         except IndyError as err:
             print(err)
             print("\nError adding wallet record")
