@@ -1,15 +1,15 @@
 # Author-Endorser-Wizards
-This open source project contains wizards that guide the user through the Author-Endorser workflow to create schemas and credential definitions. 
+This open source project contains wizards that guide the user through the Author-Endorser workflow to create schemas and credential definitions.
 
-The easiest way to setup the author and endorser wizards is to use Docker. However, if that is not available to you, instructions for Linux, Windows 10, and Mac are also provided. 
+The easiest way to setup the author and endorser wizards is to use Docker. However, if that is not available to you, instructions for Linux, Windows 10, and Mac are also provided.
 
-[**Docker Instructions**](#docker)  
-[Author](#author)  
-[Endorser](#endorser)  
-[**Alternate Setup Instructions**](#alternate)  
-[Linux](#linux)  
-[Windows](#windows)  
-[Mac](#mac)  
+[**Docker Instructions**](#docker)
+[Author](#author)
+[Endorser](#endorser)
+[**Alternate Setup Instructions**](#alternate)
+[Linux](#linux)
+[Windows](#windows)
+[Mac](#mac)
 [**Running Instructions**](#running)
 
 ---
@@ -18,15 +18,17 @@ The easiest way to setup the author and endorser wizards is to use Docker. Howev
 Once you have cloned the repo, do the following: 
 
 ### Running the Author Wizard <a id="author"></a>
-1. `docker build -t author-wizard -f author-docker-file .` (The dot is important as it signifies the current directory.)
-2. `docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z author-wizard`
-   * If on windows run: `docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z author-wizard`
+Once you have cloned the repo, do the following:
+
+1. `docker build -t wizard .` (The dot is important as it signifies the current directory.)
+2. `docker run --rm -it -v $(pwd):/app:z -v $HOME/.indy_client:/home/indy/.indy_client:z wizard /app/AuthorWizard.py`
+   * If on windows, replace `$(pwd)`, `$HOME`, and directory separators with the appropriate values.
 
 ### Running the Endorser Wizard<a id="endorser"></a>
 
-1. `docker build -t endorser-wizard -f endorser-docker-file .` (The dot is important as it signifies the current directory.)
-2. `docker run --rm -it -v \<Path to git repository\>/author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>/wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>/pool:/root/.indy_client/pool:z endorser-wizard`
-    * If on windows run: `docker run --rm -it -v \<Path to git repository\>\author-endorser-wizards:/root/author-endorser-wizards:z -v \<Path to .indy_client\>\wallet:/root/.indy_client/wallet:z -v \<Path to .indy_client\>\pool:/root/.indy_client/pool:z endorser-wizard\`
+1. If you have not already built the image: `docker build -t wizard .` (The dot is important as it signifies the current directory.)
+2. `docker run --rm -it -v $(pwd):/app:z -v $HOME/.indy_client:/home/indy/.indy_client:z wizard /app/EndorserWizard.py`
+   * If on windows, replace `$(pwd)`, `$HOME`, and directory separators with the appropriate values.
 
 ---
 
@@ -68,7 +70,7 @@ Skip to [Running Instructions](#running).
 ### MacOs <a id="mac"></a>
 On a Mac OSX workstation/laptop the following works to install and run the appropriate Wizard.  Please adjust as needed for your environment.
 
-1. Build libindy  
+1. Build libindy
 Since there is no public build of libindy, you will need to build it yourself with the following set of instructions:
     1. Run the following commands in a terminal:
         1. `cd ~`
@@ -81,23 +83,23 @@ Since there is no public build of libindy, you will need to build it yourself wi
         7. `brew install pkg-config libsodium automake autoconf cmake openssl zeromq zmq`
     2. NOTE: the _openssl_ path needs to match what you currently have on your system
         1. Run `ls /usr/local/Cellar/openssl/`
-        2. Note the name of the directory shown 
-        3. Use this directory in place of the one listed below in your _.profile_ file 
-    3. Add the following lines to your _~/.profile_ file (making the correction shown in the previous step if needed)  
-`export PATH="$HOME/.cargo/bin:$PATH:~/github/indy-sdk/libindy/target/debug:~/github/indy-sdk/cli/target/debug"`  
-`export PKG_CONFIG_ALLOW_CROSS=1`  
-`export CARGO_INCREMENTAL=1`  
-`export RUST_LOG=indy=trace`  
-`export RUST_TEST_THREADS=1`  
-`export OPENSSL_DIR=/usr/local/Cellar/openssl/1.0.2p` #use your path  
-`export LIBRARY_PATH=~/github/indy-sdk/libindy/target/debug/`  
+        2. Note the name of the directory shown
+        3. Use this directory in place of the one listed below in your _.profile_ file
+    3. Add the following lines to your _~/.profile_ file (making the correction shown in the previous step if needed)
+`export PATH="$HOME/.cargo/bin:$PATH:~/github/indy-sdk/libindy/target/debug:~/github/indy-sdk/cli/target/debug"`
+`export PKG_CONFIG_ALLOW_CROSS=1`
+`export CARGO_INCREMENTAL=1`
+`export RUST_LOG=indy=trace`
+`export RUST_TEST_THREADS=1`
+`export OPENSSL_DIR=/usr/local/Cellar/openssl/1.0.2p` #use your path
+`export LIBRARY_PATH=~/github/indy-sdk/libindy/target/debug/`
 `export LIBINDY_DIR=~/github/indy-sdk/libindy/target/debug/`
     4. Run the following commands from your terminal to build libindy and create a link to it:
         1. `source ~/.profile`
         2. `cd ~/github/indy-sdk/libindy`
         3. `cargo build`
         4. Use your own path in the following command: `ln -s /Users/username/github/indy-sdk/libindy/target/debug/*.dylib* /usr/local/lib`
-2. Python 3.8 (or greater)  
+2. Python 3.8 (or greater)
 If you do not already have it installed, install Python 3.8 or greater:
     1. `python3 --version`  (to check your version)
     2. There are multiple ways to do this for a Mac. Here is a link to one of the options: <https://installpython3.com/mac/>
