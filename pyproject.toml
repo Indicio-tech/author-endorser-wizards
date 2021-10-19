@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "indicio-txn-endorser-wizard"
+version = "0.1.0"
+description = "wizards that guide the user through the Author-Endorser workflow to create schemas and credential definitions"
+authors = [
+    "Lynn Bendixsen <lynn@indicio.tech>",
+    "Gavin Bendixsen <gavin@indicio.tech>",
+    "Daniel Blum <dbluhm@pm.me>",
+    "Adam Burdett <burdettadam@gmail.com>"
+    ]
+license = "Apache v2"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+python3-indy = "^1.16.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+pytest-cov = "^3.0.0"
+pytest-xdist = "^2.4.0"
+black = "^21.9b0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
