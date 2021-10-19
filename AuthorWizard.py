@@ -1,26 +1,18 @@
-import json
-from posixpath import join
 import asyncio
-import os
-import logging
-from logging import ERROR, WARNING, INFO, DEBUG, CRITICAL
-import urllib
 import datetime
-import secrets
-import string
-import uuid
-from aiohttp import web
-from ctypes import cdll
-from indy import ledger, did, wallet, pool, anoncreds, non_secrets
-from indy.error import (
-    ErrorCode,
-    IndyError,
-    PoolLedgerConfigAlreadyExistsError,
-    WalletAlreadyExistsError,
-)
+import json
+import os
 import platform
 import re
+import secrets
+import string
+import urllib
+import uuid
 
+from indy import anoncreds, did, ledger, non_secrets, pool, wallet
+from indy.error import (ErrorCode, IndyError,
+                        PoolLedgerConfigAlreadyExistsError,
+                        WalletAlreadyExistsError)
 
 os.system("clear")
 if platform.system() == "Windows":
