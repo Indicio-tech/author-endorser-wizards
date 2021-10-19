@@ -1,36 +1,15 @@
-from AuthorWizard import (
-    createDid,
-    createPool,
-    openPool,
-    downloadGenesis,
-    listDids,
-    listPools,
-    transactionAuthorAgreement,
-    listNetworks,
-)
-import json
-from getpass import getpass
-import logging
-from posixpath import join
-import sys
 import asyncio
-import platform
-import os
-import urllib
-import configparser
-import tempfile
-import argparse
 import datetime
-import base58
-import re
-import secrets
-import string
-from aiohttp import web
+import json
+import os
 import platform
-from ctypes import cdll
-from indy import ledger, did, wallet, pool, anoncreds
-import indy
-from indy.error import ErrorCode, IndyError, WalletAccessFailed
+from getpass import getpass
+
+from indy import ledger, pool, wallet
+from indy.error import IndyError, WalletAccessFailed
+
+from AuthorWizard import (createPool, listDids, listNetworks, listPools,
+                          openPool, transactionAuthorAgreement)
 
 walletHandle = 0
 
