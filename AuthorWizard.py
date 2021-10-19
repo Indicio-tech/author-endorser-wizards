@@ -25,10 +25,8 @@ walletHandle = 0
 def downloadGenesis(networkUrl):
     try:
         urllib.request.urlretrieve(networkUrl, "genesisFile")
-    except:
-        print("\n")
-        print("Error downloading genesis file")
-        print("\n")
+    except Exception as e:
+        print(f"\nError downloading genesis file: {e}\n")
 
 
 async def createPool(network):
@@ -51,10 +49,8 @@ async def createPool(network):
         await pool.create_pool_ledger_config(network, configJson)
     except PoolLedgerConfigAlreadyExistsError:
         print("The Network selected already exsists")
-    except:
-        print("\n")
-        print("Error Adding Network")
-        print("\n")
+    except Exception as e:
+        print(f"\nError Adding Network: {e}\n")
 
     return network
 
@@ -87,10 +83,8 @@ async def listPools(role):
     print("\nConnect to a Network\n--------------------\n")
     try:
         poolList = await pool.list_pools()
-    except:
-        print("\n")
-        print("Error creating list of networks")
-        print("\n")
+    except Exception as e:
+        print(f"\nError creating list of networks: {e}\n")
 
     print(role + "'s Networks:")
     for i in range(len(poolList)):
@@ -120,10 +114,8 @@ async def createWallet():
         await wallet.create_wallet(walletIDJson, walletKeyJson)
     except WalletAlreadyExistsError:
         print("\nThe Wallet " + walletName + " already exsists and will be opened\n")
-    except:
-        print("\n")
-        print("Error creating wallet '" + walletName + "'")
-        print("\n")
+    except Exception as e:
+        print(f"\nError creating wallet: '{walletName}' with error: {e}")
 
     else:
         print("...done")
