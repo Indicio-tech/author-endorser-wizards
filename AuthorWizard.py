@@ -853,7 +853,7 @@ async def createCredDef(authorDid, poolHandle):
                 json.dumps(schemaJson),
                 tag="1",
                 signature_type="CL",
-                config_json=json.dumps({"support_revocation": True}),
+                config_json=json.dumps({"support_revocation": False}),
             )
         except IndyError as err:
             print(err)
