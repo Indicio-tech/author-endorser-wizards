@@ -9,10 +9,13 @@ authors = [
     "Adam Burdett <burdettadam@gmail.com>"
     ]
 license = "Apache v2"
-
+packages = [
+    { include = "author"},
+]
 [tool.poetry.dependencies]
 python = "^3.9"
 python3-indy = "^1.16.0"
+pytest = "^6.2.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
