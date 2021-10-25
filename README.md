@@ -32,7 +32,7 @@ Once you have cloned the repo, do the following:
 ### Running the Endorser Wizard<a id="endorser"></a>
 
 1. If you have not already built the image: `docker build -t wizard .` (The dot is important as it signifies the current directory.)
-2. `docker run --rm -it -v $(pwd):/app:z -v $HOME/.indy_client:/home/indy/.indy_client:z wizard /app/EndorserWizard.py`
+2. `docker run --rm -it -v $(pwd):/app:z -v $HOME/.indy_client:/home/indy/.indy_client:z wizard /app/endorser.py`
    * If on windows, replace `$(pwd)`, `$HOME`, and directory separators with the appropriate values.
 
 ---
@@ -117,7 +117,7 @@ If you do not already have it installed, install Python 3.8 or greater:
 5. `git clone https://github.com/Indicio-tech/author-endorser-wizards.git`
 6. `cd author-endorser-wizards`
 7. If you are the Author run: `python3 author/author.py`
-8. If you are the Endorser run: `python3 endorser/EndorserWizard.py`
+8. If you are the Endorser run: `python3 endorser/endorser.py`
 
 ---
 
@@ -136,4 +136,4 @@ If you do not already have it installed, install Python 3.8 or greater:
 
 #### If you are the Endorser run
 
-1. `python3 EndorserWizard.py`
+1. `python3 endorser/endorser.py`

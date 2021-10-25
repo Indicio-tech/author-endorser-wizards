@@ -8,8 +8,14 @@ from getpass import getpass
 from indy import ledger, pool, wallet
 from indy.error import IndyError, WalletAccessFailed
 
-from author import (createPool, listDids, listNetworks, listPools,
-                          openPool, transactionAuthorAgreement)
+from author import (
+    createPool,
+    listDids,
+    listNetworks,
+    listPools,
+    openPool,
+    transactionAuthorAgreement,
+)
 
 walletHandle = 0
 
