@@ -323,7 +323,7 @@ def displayMenu():
     print("  0: Author Wizard")
     print("  1: Create Schema")
     print("  2: Create Credential Definition")
-    print("  3: Sign Transaction and Send to Ledger")
+    print("  3: Sign Transaction and Send to Network")
     print("  4: Add Network")
     print("  5: Connect to a Network")
     print("  6: Create Wallet")
@@ -1008,11 +1008,11 @@ type 'm' to go to the main menu):"""
                     poolHandle, walletHandle, authorDid
                 )
                 await signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle)
-        elif authorAction == "5":
+        elif authorAction == "4":
             network = listNetworks()
             await createPool(network)
             print("Network '", network, "' added.")
-        elif authorAction == "6":
+        elif authorAction == "5":
             poolList = await listPools(role)
             authorPool = input(
                 "Choose the index number of the network you wish to use: "
@@ -1024,20 +1024,19 @@ type 'm' to go to the main menu):"""
             else:
                 poolHandle = await openPool(authorPool)
             print("Pool opened.")
-        elif authorAction == "7":
+        elif authorAction == "6":
 
             await createWallet()
 
-        elif authorAction == "8":
+        elif authorAction == "7":
             await openWallet()
 
-        elif authorAction == "9":
+        elif authorAction == "8":
 
             await createDid(role, walletHandle)
 
-        elif authorAction == "10":
+        elif authorAction == "9":
             authorDid, authorVerKey = await listDids(role, walletHandle)
-            # useDid(authorDid)
         else:
             displayMenu()
     if poolHandle:

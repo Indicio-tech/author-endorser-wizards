@@ -323,13 +323,13 @@ async def writeAuthorToLedger(poolHandle, authorTxnJson, endorserDid, tAA):
 def displayMenu():
     print("Menu:")
     print("  0: Endorser Wizard")
-    print("  1: Sign Authors transaction and send to ledger")
-    print("  2: Create Pool")
-    print("  3: Open Pool")
+    print("  1: Sign Authors transaction and send to Network")
+    print("  2: Add Network")
+    print("  3: Connect to a Network")
     print("  4: Create Wallet")
     print("  5: Open Wallet")
     print("  6: Use DID")
-    print("  7: Write Author's DID to ledger")
+    print("  7: Write Author's DID to Network")
     print("  8: Agree to the TAA")
     print("  9: Display Menu")
     print("  q: Quit")
@@ -456,7 +456,6 @@ referring to the main menu. (Hit 'enter' now to use the wizard, or type 'm' to g
         elif endorserAction == "2":
             network = listNetworks()
             await createPool(network)
-            print("connected to network '", network, "'.")
         elif endorserAction == "3":
             poolList = await listPools()
             endorserPool = input(
@@ -476,7 +475,6 @@ referring to the main menu. (Hit 'enter' now to use the wizard, or type 'm' to g
 
         elif endorserAction == "6":
             endorserDid = await listDids(role, walletHandle)
-            # useDid(authorDid)
         elif endorserAction == "7":
             if poolHandle == 0:
                 print("There is no open pool. Please open a pool first (option 3)")
@@ -500,6 +498,8 @@ referring to the main menu. (Hit 'enter' now to use the wizard, or type 'm' to g
                 print("Please open a pool first (option 3)")
             elif endorserDid == "":
                 print("Please specify your endorser DID (option 6)")
+            elif walletHandle == 0:
+                print("Please open a wallet first (option 5)")
             else:
                 tAA = await transactionAuthorAgreement(
                     poolHandle, walletHandle, endorserDid
