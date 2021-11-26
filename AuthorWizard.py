@@ -435,9 +435,10 @@ async def createDid(role, walletHandle):
     return authorDid
 
 
-async def listDids(role, walletHandle):
+async def listDids(role):
     didListJson = ""
     error = True
+    global walletHandle
     print("\n" + role + "'s DIDs\n------------\n")
     print(
         'Adding issuer transactions to the ledger requires you to create and maintain an "'
@@ -983,13 +984,23 @@ type 'm' to go to the main menu):"""
         elif authorAction == "0":
             poolHandle, tAA, author = await authorWizard(author)
         elif authorAction == "1":
-            authorDid, authorVerKey = await listDids(role)
-            await createSchema(authorDid)
+            if walletHandle == 0:
+                print("Please open a wallet first. (option 7)")
+            elif poolHandle == 0:
+                print("Please connect to a network first. (option 5)")
+            else:
+                authorDid, authorVerKey = await listDids(role)
+                authorsTxn = await createSchema(authorDid)
 
         elif authorAction == "2":
-            # listSchemas
-            # createCredDef(schema)
-            authorsTxn = await createCredDef(authorDid, poolHandle)
+            if walletHandle == 0:
+                print("Please open a wallet first. (option 7)")
+            elif poolHandle == 0:
+                print("Please connect to a network first. (option 5)")
+            elif authorDid == "none":
+                print("Please select an author DID first. (option 9)")
+            else:
+                authorsTxn = await createCredDef(authorDid, poolHandle)
         elif authorAction == "3":
             if poolHandle == 0:
                 print(
@@ -1025,7 +1036,6 @@ type 'm' to go to the main menu):"""
                 poolHandle = await openPool(authorPool)
             print("Pool opened.")
         elif authorAction == "6":
-
             await createWallet()
 
         elif authorAction == "7":
@@ -1033,10 +1043,13 @@ type 'm' to go to the main menu):"""
 
         elif authorAction == "8":
 
-            await createDid(role, walletHandle)
+            await createDid(role)
 
         elif authorAction == "9":
-            authorDid, authorVerKey = await listDids(role, walletHandle)
+            if walletHandle == 0:
+                print("Please select open a wallet first (option 7)")
+            else:
+                authorDid, authorVerKey = await listDids(role)
         else:
             displayMenu()
     if poolHandle:

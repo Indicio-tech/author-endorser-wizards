@@ -477,7 +477,7 @@ referring to the main menu. (Hit 'enter' now to use the wizard, or type 'm' to g
             endorserDid = await listDids(role, walletHandle)
         elif endorserAction == "7":
             if poolHandle == 0:
-                print("There is no open pool. Please open a pool first (option 3)")
+                print("There is no connected network. Please connect to a network first (option 3)")
             elif endorserDid == "":
                 print(
                     "You have not yet chosen the DID to use for this transaction. Please specify your endorser DID (option 6)"
@@ -495,7 +495,7 @@ referring to the main menu. (Hit 'enter' now to use the wizard, or type 'm' to g
                 await writeAuthorToLedger(poolHandle, authorInfoJson, endorserDid, tAA)
         elif endorserAction == "8":
             if poolHandle == 0:
-                print("Please open a pool first (option 3)")
+                print("Please connect to a network first (option 3)")
             elif endorserDid == "":
                 print("Please specify your endorser DID (option 6)")
             elif walletHandle == 0:
