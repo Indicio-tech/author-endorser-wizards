@@ -24,6 +24,7 @@ import re
 
 os.system("clear")
 if platform.system() == "Windows":
+    os.system("cls")
     os.add_dll_directory(os.getenv("LIBINDY_DIR"))
 
 role = "Author"
@@ -352,10 +353,11 @@ def listNetworks():
     return network
 
 
-async def createDid(role, walletHandle):
+async def createDid(role):
     valid = False
     authorDid = ""
 
+    global walletHandle
     print(
         "A 'seed' is required for you to be able to add your "
         + role
@@ -435,10 +437,9 @@ async def createDid(role, walletHandle):
     return authorDid
 
 
-async def listDids(role):
+async def listDids(role, walletHandle):
     didListJson = ""
     error = True
-    global walletHandle
     print("\n" + role + "'s DIDs\n------------\n")
     print(
         'Adding issuer transactions to the ledger requires you to create and maintain an "'
@@ -989,7 +990,7 @@ type 'm' to go to the main menu):"""
             elif poolHandle == 0:
                 print("Please connect to a network first. (option 5)")
             else:
-                authorDid, authorVerKey = await listDids(role)
+                authorDid, authorVerKey = await listDids(role, walletHandle)
                 authorsTxn = await createSchema(authorDid)
 
         elif authorAction == "2":
@@ -1004,7 +1005,7 @@ type 'm' to go to the main menu):"""
         elif authorAction == "3":
             if poolHandle == 0:
                 print(
-                    "There is no network connected. Please connect to a network first (option 6)"
+                    "There is no network connected. Please connect to a network first (option 5)"
                 )
             elif authorsTxn == "none":
                 print(
@@ -1034,7 +1035,7 @@ type 'm' to go to the main menu):"""
                 poolHandle = await openPool(network)
             else:
                 poolHandle = await openPool(authorPool)
-            print("Pool opened.")
+            print("Network connected.")
         elif authorAction == "6":
             await createWallet()
 
@@ -1042,14 +1043,16 @@ type 'm' to go to the main menu):"""
             await openWallet()
 
         elif authorAction == "8":
-
-            await createDid(role)
+            if walletHandle == 0:
+                print("Please select open a wallet first (option 7)")
+            else:
+                await createDid(role)
 
         elif authorAction == "9":
             if walletHandle == 0:
                 print("Please select open a wallet first (option 7)")
             else:
-                authorDid, authorVerKey = await listDids(role)
+                authorDid, authorVerKey = await listDids(role, walletHandle)
         else:
             displayMenu()
     if poolHandle:

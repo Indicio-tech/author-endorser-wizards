@@ -37,6 +37,7 @@ walletHandle = 0
 role = "Endorser"
 
 
+
 async def signTxn(poolHandle, endorserDid, tAA):
     print("\nTransaction Signing\n-------------------\n")
     slash = "/"
