@@ -1,43 +1,53 @@
 # Author-Endorser-Wizards
+
 This open source project contains wizards that guide the user through the Author-Endorser workflow to create schemas and credential definitions.
 
 The easiest way to setup the author and endorser wizards is to use Docker. However, if that is not available to you, instructions for Linux, Windows 10, and Mac are also provided.
 
-[**Docker Instructions**](#docker)
-[Author](#author)
-[Endorser](#endorser)
-[**Alternate Setup Instructions**](#alternate)
-[Linux](#linux)
-[Windows](#windows)
-[Mac](#mac)
-[**Running Instructions**](#running)
+## **Table of contents**
+
+- [**Docker Setup Instructions**](#docker)
+  - [Running the Author Wizard](#author)
+  - [Endorser](#endorser)
+- [**Alternate Setup Instructions**](#alternate)
+  - [Ubuntu 18.04](#linux)
+  - [Windows 10](#windows)
+  - [Mac OSX](#mac)
+- [**Running Instructions**](#running)
 
 ---
 
-## Docker Setup Instructions <a id="docker"></a>
-Once you have cloned the repo, do the following: 
+## **Docker Setup Instructions** <a id="docker"></a>
 
+Once you have cloned the repo, do the following:
+
+### **Running the Author Wizard** <a id="author"></a>
+
+Once you have cloned the repo, do the following:
 ### Running the Author Wizard <a id="author"></a>
 
 1. `docker build -t wizard .` (The dot is important as it signifies the current directory.)
-2. `docker run --rm -it -v $(pwd):/app:z -v $HOME/.indy_client:/home/indy/.indy_client:z wizard /app/AuthorWizard.py`
+2. `docker run --rm -it -v $(pwd):/app:z -v $HOME/.indy_client:/home/indy/.indy_client:z wizard /app/author/author.py`
    * If on windows, replace `$(pwd)`, `$HOME`, and directory separators with the appropriate values.
 
 ### Running the Endorser Wizard<a id="endorser"></a>
 
 1. If you have not already built the image: `docker build -t wizard .` (The dot is important as it signifies the current directory.)
-2. `docker run --rm -it -v $(pwd):/app:z -v $HOME/.indy_client:/home/indy/.indy_client:z wizard /app/EndorserWizard.py`
+2. `docker run --rm -it -v $(pwd):/app:z -v $HOME/.indy_client:/home/indy/.indy_client:z wizard /app/endorser.py`
    * If on windows, replace `$(pwd)`, `$HOME`, and directory separators with the appropriate values.
 
 ---
 
-## Alternate Setup Instructions <a id="alternate"></a>
+## **Alternate Setup Instructions** <a id="alternate"></a>
+
 If you're not using Docker, here are the individual setup and running instructions you can follow to run the author and endorser wizards.
 
-### Linux 18.04 <a id="linux"></a>
+### Ubuntu 18.04 <a id="linux"></a>
 
 On a clean install of Ubuntu 18.04, the following works to install and run the Appropriate Wizard.  Please adjust as needed for your environment.
+
 #### Install libindy
+
 1. `sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CE7709D068DB5E88`
 2. `sudo add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic stable"`
 3. `sudo apt-get update`
@@ -45,6 +55,7 @@ On a clean install of Ubuntu 18.04, the following works to install and run the A
 5. `sudo apt-get install -y libindy`
 
 #### Install Python
+
 1. `sudo apt install python3.8 -y`
 2. `sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1`
 3. `sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2`
@@ -54,10 +65,10 @@ On a clean install of Ubuntu 18.04, the following works to install and run the A
 
 Skip to [Running Instructions](#running).
 
-
 ### Windows 10 <a id="windows"></a>
+
 1. Install Python 3.9
-2. Download latest from https://repo.sovrin.org/windows/libindy/stable
+2. Download latest from <https://repo.sovrin.org/windows/libindy/stable>
 3. Extract the libindy folder to your desired directory
 4. Run in Command Prompt: `set LIBINDY_DIR=\<Full path to the libindy folder\>`
 5. `set PYTHONPATH=C:\Python39\Lib\site-packages`
@@ -65,8 +76,8 @@ Skip to [Running Instructions](#running).
 7. `pip3 install asyncio aiohttp indy base58 Python3-indy`
 8. Skip to [Running Instructions](#running).
 
+### Mac OSX <a id="mac"></a>
 
-### MacOs <a id="mac"></a>
 On a Mac OSX workstation/laptop the following works to install and run the appropriate Wizard.  Please adjust as needed for your environment.
 
 1. Build libindy
@@ -78,7 +89,7 @@ Since there is no public build of libindy, you will need to build it yourself wi
         4. `git clone https://github.com/hyperledger/indy-sdk.git` (You might need `xcode-select --install` if an error occurs or select “install” if it offers xcode tools)
         5. `/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
         6. `curl https://sh.rustup.rs -sSf | sh`
-	        1. Follow the on-screen instructions to install rust
+        1. Follow the on-screen instructions to install rust
         7. `brew install pkg-config libsodium automake autoconf cmake openssl zeromq zmq`
     2. NOTE: the _openssl_ path needs to match what you currently have on your system
         1. Run `ls /usr/local/Cellar/openssl/`
@@ -106,20 +117,24 @@ If you do not already have it installed, install Python 3.8 or greater:
 4. `cd ~/github`
 5. `git clone https://github.com/Indicio-tech/author-endorser-wizards.git`
 6. `cd author-endorser-wizards`
-7. If you are the Author run: `python3 AuthorWizard.py`
-8. If you are the Endorser run: `python3 EndorserWizard.py`
+7. If you are the Author run: `python3 author/author.py`
+8. If you are the Endorser run: `python3 endorser/endorser.py`
 
 ---
 
-
 ## Running Instructions <a id="running"></a>
-#### Navigate to the author-endorser-wizards directory:
+
+#### Navigate to the author-endorser-wizards directory
+
 1. `mk dir git` (Skip this step if you've already created a git directory)
 2. `cd git`
 3. `git clone https://github.com/Indicio-tech/author-endorser-wizards.git`
 4. `cd author-endorser-wizards`
 
-#### If you are the Author run:
-1. `python3 AuthorWizard.py`
-#### If you are the Endorser run:
-1. `python3 EndorserWizard.py`
+#### If you are the Author run
+
+1. `python3 author.py`
+
+#### If you are the Endorser run
+
+1. `python3 endorser/endorser.py`

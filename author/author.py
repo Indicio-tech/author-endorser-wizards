@@ -1,28 +1,22 @@
-import json
-from posixpath import join
 import asyncio
-import os
-import logging
-from logging import ERROR, WARNING, INFO, DEBUG, CRITICAL
-import urllib
 import datetime
+import json
+import os
+import platform
+import re
 import secrets
 import string
+import urllib
 import uuid
-from aiohttp import web
-from ctypes import cdll
-from indy import ledger, did, wallet, pool, anoncreds, non_secrets
+
+from indy import anoncreds, did, ledger, non_secrets, pool, wallet
 from indy.error import (
     ErrorCode,
     IndyError,
     PoolLedgerConfigAlreadyExistsError,
     WalletAlreadyExistsError,
 )
-import platform
-import re
 
-
-os.system("clear")
 if platform.system() == "Windows":
     os.add_dll_directory(os.getenv("LIBINDY_DIR"))
 
@@ -33,10 +27,8 @@ walletHandle = 0
 def downloadGenesis(networkUrl):
     try:
         urllib.request.urlretrieve(networkUrl, "genesisFile")
-    except:
-        print("\n")
-        print("Error downloading genesis file")
-        print("\n")
+    except Exception as e:
+        print(f"\nError downloading genesis file: {e}\n")
 
 
 async def createPool(network):
@@ -59,10 +51,8 @@ async def createPool(network):
         await pool.create_pool_ledger_config(network, configJson)
     except PoolLedgerConfigAlreadyExistsError:
         print("The Network selected already exsists")
-    except:
-        print("\n")
-        print("Error Adding Network")
-        print("\n")
+    except Exception as e:
+        print(f"\nError Adding Network: {e}\n")
 
     return network
 
@@ -95,10 +85,8 @@ async def listPools(role):
     print("\nConnect to a Network\n--------------------\n")
     try:
         poolList = await pool.list_pools()
-    except:
-        print("\n")
-        print("Error creating list of networks")
-        print("\n")
+    except Exception as e:
+        print(f"\nError creating list of networks: {e}\n")
 
     print(role + "'s Networks:")
     for i in range(len(poolList)):
@@ -128,10 +116,8 @@ async def createWallet():
         await wallet.create_wallet(walletIDJson, walletKeyJson)
     except WalletAlreadyExistsError:
         print("\nThe Wallet " + walletName + " already exsists and will be opened\n")
-    except:
-        print("\n")
-        print("Error creating wallet '" + walletName + "'")
-        print("\n")
+    except Exception as e:
+        print(f"\nError creating wallet: '{walletName}' with error: {e}")
 
     else:
         print("...done")
@@ -859,35 +845,47 @@ async def createCredDef(authorDid, poolHandle):
             print(err)
             print("Error while creating cred def")
         try:
-            timestamp = str(int(datetime.datetime.now(datetime.timezone.utc).timestamp()))
-            tags = json.dumps({
-                "schema_id": schemaID,
-                "schema_issuer_did": schemaID.split(":")[0],
-                "schema_name": schemaJson["name"],
-                "schema_version": schemaJson["version"],
-                "issuer_did": authorDid,
-                "cred_def_id": credDefId,
-                "epoch": timestamp,
-            })
-            #this is for aca-py
-            await non_secrets.add_wallet_record(walletHandle, "cred_def_sent", credDefId, credDefId, tags)
-            tags = json.dumps({
-                "cred_def_id": credDefId,
-                "schema_id": schemaID,
-                "state": "written",
-                "author": "self",
-            })
-            value = json.dumps({
-                "attributes": schemaJson["attrNames"],
-                "cred_def_id": credDefId,
-                "schema_id": schemaID,
-                "state": "written",
-                "author": "self",
-                "created_at": timestamp,
-                "updated_at": timestamp,
-            })
-            #this is for aries toolbox
-            await non_secrets.add_wallet_record(walletHandle, "cred_def", str(uuid.uuid4()), value, tags)
+            timestamp = str(
+                int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+            )
+            tags = json.dumps(
+                {
+                    "schema_id": schemaID,
+                    "schema_issuer_did": schemaID.split(":")[0],
+                    "schema_name": schemaJson["name"],
+                    "schema_version": schemaJson["version"],
+                    "issuer_did": authorDid,
+                    "cred_def_id": credDefId,
+                    "epoch": timestamp,
+                }
+            )
+            # this is for aca-py
+            await non_secrets.add_wallet_record(
+                walletHandle, "cred_def_sent", credDefId, credDefId, tags
+            )
+            tags = json.dumps(
+                {
+                    "cred_def_id": credDefId,
+                    "schema_id": schemaID,
+                    "state": "written",
+                    "author": "self",
+                }
+            )
+            value = json.dumps(
+                {
+                    "attributes": schemaJson["attrNames"],
+                    "cred_def_id": credDefId,
+                    "schema_id": schemaID,
+                    "state": "written",
+                    "author": "self",
+                    "created_at": timestamp,
+                    "updated_at": timestamp,
+                }
+            )
+            # this is for aries toolbox
+            await non_secrets.add_wallet_record(
+                walletHandle, "cred_def", str(uuid.uuid4()), value, tags
+            )
         except IndyError as err:
             print(err)
             print("\nError adding wallet record")
@@ -1046,4 +1044,5 @@ type 'm' to go to the main menu):"""
 
 
 if __name__ == "__main__":
+    os.system("clear")
     asyncio.get_event_loop().run_until_complete(main())
