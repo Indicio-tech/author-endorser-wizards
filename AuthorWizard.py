@@ -24,6 +24,7 @@ import re
 
 os.system("clear")
 if platform.system() == "Windows":
+    os.system("cls")
     os.add_dll_directory(os.getenv("LIBINDY_DIR"))
 
 role = "Author"
@@ -323,7 +324,7 @@ def displayMenu():
     print("  0: Author Wizard")
     print("  1: Create Schema")
     print("  2: Create Credential Definition")
-    print("  3: Sign Transaction and Send to Ledger")
+    print("  3: Sign Transaction and Send to Network")
     print("  4: Add Network")
     print("  5: Connect to a Network")
     print("  6: Create Wallet")
@@ -352,10 +353,11 @@ def listNetworks():
     return network
 
 
-async def createDid(role, walletHandle):
+async def createDid(role):
     valid = False
     authorDid = ""
 
+    global walletHandle
     print(
         "A 'seed' is required for you to be able to add your "
         + role
@@ -983,17 +985,27 @@ type 'm' to go to the main menu):"""
         elif authorAction == "0":
             poolHandle, tAA, author = await authorWizard(author)
         elif authorAction == "1":
-            authorDid, authorVerKey = await listDids(role)
-            await createSchema(authorDid)
+            if walletHandle == 0:
+                print("Please open a wallet first. (option 7)")
+            elif poolHandle == 0:
+                print("Please connect to a network first. (option 5)")
+            else:
+                authorDid, authorVerKey = await listDids(role, walletHandle)
+                authorsTxn = await createSchema(authorDid)
 
         elif authorAction == "2":
-            # listSchemas
-            # createCredDef(schema)
-            authorsTxn = await createCredDef(authorDid, poolHandle)
+            if walletHandle == 0:
+                print("Please open a wallet first. (option 7)")
+            elif poolHandle == 0:
+                print("Please connect to a network first. (option 5)")
+            elif authorDid == "none":
+                print("Please select an author DID first. (option 9)")
+            else:
+                authorsTxn = await createCredDef(authorDid, poolHandle)
         elif authorAction == "3":
             if poolHandle == 0:
                 print(
-                    "There is no network connected. Please connect to a network first (option 6)"
+                    "There is no network connected. Please connect to a network first (option 5)"
                 )
             elif authorsTxn == "none":
                 print(
@@ -1008,11 +1020,11 @@ type 'm' to go to the main menu):"""
                     poolHandle, walletHandle, authorDid
                 )
                 await signSendTxn(authorDid, authorVerKey, authorsTxn, tAA, poolHandle)
-        elif authorAction == "5":
+        elif authorAction == "4":
             network = listNetworks()
             await createPool(network)
             print("Network '", network, "' added.")
-        elif authorAction == "6":
+        elif authorAction == "5":
             poolList = await listPools(role)
             authorPool = input(
                 "Choose the index number of the network you wish to use: "
@@ -1023,21 +1035,24 @@ type 'm' to go to the main menu):"""
                 poolHandle = await openPool(network)
             else:
                 poolHandle = await openPool(authorPool)
-            print("Pool opened.")
-        elif authorAction == "7":
-
+            print("Network connected.")
+        elif authorAction == "6":
             await createWallet()
 
-        elif authorAction == "8":
+        elif authorAction == "7":
             await openWallet()
 
+        elif authorAction == "8":
+            if walletHandle == 0:
+                print("Please select open a wallet first (option 7)")
+            else:
+                await createDid(role)
+
         elif authorAction == "9":
-
-            await createDid(role, walletHandle)
-
-        elif authorAction == "10":
-            authorDid, authorVerKey = await listDids(role, walletHandle)
-            # useDid(authorDid)
+            if walletHandle == 0:
+                print("Please select open a wallet first (option 7)")
+            else:
+                authorDid, authorVerKey = await listDids(role, walletHandle)
         else:
             displayMenu()
     if poolHandle:
